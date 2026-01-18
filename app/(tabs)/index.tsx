@@ -1,98 +1,111 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import { 
+  StyleSheet, View, Text, Dimensions, KeyboardAvoidingView, 
+  Platform, ScrollView, StatusBar, Pressable 
+} from 'react-native';
+// 1. Importar o router
+import { useRouter } from 'expo-router';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { GasoInput } from '../../components/GasoInput';
+import { GasoButton } from '../../components/GasoButton';
+import { COLORS } from '../../constants/Colors';
 
-export default function HomeScreen() {
+const { height } = Dimensions.get('window');
+
+export default function LoginScreen() {
+  // 2. Inicializar o router
+  const router = useRouter();
+
+  const handleLogin = () => {
+    // Aqui você adicionaria sua lógica de validação futuramente
+    console.log("Login realizado!");
+    
+    // 3. Encaminhar para a tela home
+    // Certifique-se de que o arquivo app/(tabs)/home.tsx existe
+    router.replace('/home'); 
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View style={styles.main}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        style={{ flex: 1 }}
+      >
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1 }} 
+          bounces={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <View style={styles.logoSquare}>
+                <View style={styles.logoCircle} />
+              </View>
+              <Text style={styles.logoText}>GasoLink</Text>
+            </View>
+          </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+          <View style={styles.formCard}>
+            <Text style={styles.title}>Olá novamente!</Text>
+            <Text style={styles.subtitle}>Acesse sua conta para continuar.</Text>
+
+            <GasoInput 
+              label="E-mail" 
+              placeholder="seu@email.com" 
+              keyboardType="email-address" 
+              autoCapitalize="none" 
+            />
+            
+            <GasoInput 
+              label="Senha" 
+              placeholder="••••••••" 
+              secureTextEntry 
+            />
+
+            {/* 4. Chamar a função no onPress */}
+            <GasoButton 
+              title="Entrar na Conta" 
+              onPress={handleLogin} 
+            />
+
+            <Pressable 
+              style={styles.footerBtn}
+              onPress={() => router.push('/registro')} // Exemplo para tela de cadastro
+            >
+              <Text style={styles.footerText}>
+                Não tem conta? <Text style={styles.bold}>Cadastre-se</Text>
+              </Text>
+            </Pressable>
+          </View>
+
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
+// ... seus estilos permanecem os mesmos
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  main: { flex: 1, backgroundColor: COLORS.white },
+  header: {
+    height: height * 0.35,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 50,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  logoContainer: { alignItems: 'center' },
+  logoSquare: { width: 64, height: 64, backgroundColor: COLORS.white, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  logoCircle: { width: 28, height: 28, backgroundColor: COLORS.primary, borderRadius: 14 },
+  logoText: { color: COLORS.white, fontSize: 22, fontWeight: '900', letterSpacing: 2, textTransform: 'uppercase' },
+  formCard: { flex: 1, paddingHorizontal: 30, paddingTop: 40 },
+  title: { fontSize: 28, fontWeight: '800', color: COLORS.text },
+  subtitle: { fontSize: 15, color: COLORS.secondaryText, marginBottom: 35, marginTop: 5 },
+  footerBtn: { marginTop: 30, alignItems: 'center', paddingBottom: 40 },
+  footerText: { color: COLORS.secondaryText, fontSize: 14 },
+  bold: { color: COLORS.primary, fontWeight: '800' }
 });
