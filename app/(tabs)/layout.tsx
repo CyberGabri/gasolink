@@ -1,23 +1,82 @@
-import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../constants/Colors';
+import { Tabs } from "expo-router";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { COLORS } from "../../constants/Colors";
 
-export default function TabLayout() {
+export default function TabsLayout() {
   return (
-    <Tabs screenOptions={{
-      tabBarActiveTintColor: COLORS.primary,
-      tabBarInactiveTintColor: COLORS.secondaryText,
-      tabBarStyle: { height: 65, paddingBottom: 10, paddingTop: 10 },
-      headerShown: false,
-    }}>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          position: "absolute",
+          bottom: 25,
+          left: 20,
+          right: 20,
+          height: 75,
+          borderRadius: 30,
+          backgroundColor: "#FFFFFF",
+          elevation: 15,
+        },
+        tabBarShowLabel: true,
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: "#94a3b8",
+      }}
+    >
       <Tabs.Screen
-        name="index"
+        name="inicio"
         options={{
-          title: 'Login',
-          tabBarIcon: ({ color }) => <Ionicons name="log-in-outline" size={24} color={color} />,
+          title: "Início",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "home" : "home-outline"}
+              size={24}
+              color={color}
+            />
+          ),
         }}
       />
-      {/* Adicione outras abas aqui */}
+
+      <Tabs.Screen
+        name="veiculo-config"
+        options={{
+          title: "Veículo",
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? "car" : "car-outline"}
+              size={26}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="meu-plano"
+        options={{
+          title: "Planos",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "flash" : "flash-outline"}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="perfil-user"
+        options={{
+          title: "Perfil",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "person" : "person-outline"}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
