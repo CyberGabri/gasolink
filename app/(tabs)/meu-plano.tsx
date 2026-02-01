@@ -9,45 +9,15 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { MotiView } from "moti";
+import { MotiView, AnimatePresence } from "moti";
 
-// Definição dos planos com cores e benefícios crescentes
+// Constantes de Planos com cores seguras
 const PLANOS = [
-  {
-    id: "basico",
-    nome: "Básico",
-    preco: "Grátis",
-    cor: "#94a3b8",
-    desc: "Acesso ao mapa básico",
-  },
-  {
-    id: "medio",
-    nome: "Médio",
-    preco: "R$ 9,90",
-    cor: "#3b82f6",
-    desc: "Alertas de preço em tempo real",
-  },
-  {
-    id: "premium",
-    nome: "Premium",
-    preco: "R$ 19,90",
-    cor: "#FFD700",
-    desc: "Cálculo de autonomia + Zero Ads",
-  },
-  {
-    id: "ultra",
-    nome: "Ultra",
-    preco: "R$ 34,90",
-    cor: "#f97316",
-    desc: "Suporte VIP + Histórico ilimitado",
-  },
-  {
-    id: "mega",
-    nome: "MEGA",
-    preco: "R$ 59,90",
-    cor: "#a855f7",
-    desc: "IA Predictor + Clube de Vantagens",
-  },
+  { id: "basico", nome: "Básico", preco: "Grátis", cor: "#94a3b8", desc: "Mapa básico e preços" },
+  { id: "medio", nome: "Médio", preco: "R$ 9,90", cor: "#3b82f6", desc: "Alertas em tempo real" },
+  { id: "premium", nome: "Premium", preco: "R$ 19,90", cor: "#FFD700", desc: "Autonomia + Zero Ads" },
+  { id: "ultra", nome: "Ultra", preco: "R$ 34,90", cor: "#f97316", desc: "Suporte VIP e Histórico" },
+  { id: "mega", nome: "MEGA", preco: "R$ 59,90", cor: "#a855f7", desc: "IA Predictor de Preços" },
 ];
 
 export default function PlanosScreen() {
@@ -66,66 +36,71 @@ export default function PlanosScreen() {
 
         {PLANOS.map((plano, index) => {
           const isSelected = selecionado === plano.id;
+          const cardColor = isSelected ? plano.cor : "#E2E8F0";
 
           return (
             <TouchableOpacity
               key={plano.id}
-              activeOpacity={0.9}
+              activeOpacity={0.8}
               onPress={() => setSelecionado(plano.id)}
             >
               <MotiView
-                from={{ opacity: 0, translateY: 20 }}
+                from={{ opacity: 0, translateY: 15 }}
                 animate={{
                   opacity: 1,
                   translateY: 0,
                   scale: isSelected ? 1.02 : 1,
-                  borderColor: isSelected ? plano.cor : "#E2E8F0",
+                  borderColor: cardColor,
                 }}
-                transition={{ delay: index * 100, type: "timing" }}
-                style={[styles.planCard, isSelected && styles.selectedShadow]}
+                transition={{ 
+                  type: "spring", 
+                  damping: 15,
+                  delay: index * 50 // Delay reduzido para performance
+                }}
+                style={[
+                  styles.planCard, 
+                  isSelected && { elevation: 8, shadowColor: plano.cor }
+                ]}
               >
                 <View style={styles.cardHeader}>
-                  <View
-                    style={[styles.colorBar, { backgroundColor: plano.cor }]}
-                  />
+                  <View style={[styles.colorBar, { backgroundColor: plano.cor }]} />
                   <View style={styles.textInfo}>
-                    <Text
-                      style={[
-                        styles.planName,
-                        { color: isSelected ? plano.cor : "#1e293b" },
-                      ]}
-                    >
+                    <Text style={[styles.planName, { color: isSelected ? plano.cor : "#1e293b" }]}>
                       {plano.nome} {isSelected && "✓"}
                     </Text>
-                    <Text style={styles.planDesc}>{plano.desc}</Text>
+                    <Text style={styles.planDesc} numberOfLines={1}>{plano.desc}</Text>
                   </View>
                   <View style={styles.priceContainer}>
                     <Text style={styles.planPrice}>{plano.preco}</Text>
                   </View>
                 </View>
 
-                {isSelected && (
-                  <MotiView
-                    from={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 60 }}
-                    style={styles.expandedArea}
-                  >
-                    <TouchableOpacity
-                      style={[
-                        styles.subscribeBtn,
-                        { backgroundColor: plano.cor },
-                      ]}
+                {/* Animação de expansão protegida */}
+                <AnimatePresence>
+                  {isSelected && (
+                    <MotiView
+                      from={{ opacity: 0, scaleY: 0.8 }}
+                      animate={{ opacity: 1, scaleY: 1 }}
+                      exit={{ opacity: 0, scaleY: 0.8 }}
+                      transition={{ type: 'timing', duration: 200 }}
+                      style={styles.expandedArea}
                     >
-                      <Text style={styles.subscribeBtnText}>ATIVAR AGORA</Text>
-                    </TouchableOpacity>
-                  </MotiView>
-                )}
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        style={[styles.subscribeBtn, { backgroundColor: plano.cor }]}
+                      >
+                        <Text style={styles.subscribeBtnText}>ATIVAR AGORA</Text>
+                      </TouchableOpacity>
+                    </MotiView>
+                  )}
+                </AnimatePresence>
               </MotiView>
             </TouchableOpacity>
           );
         })}
 
-        <View style={{ height: 50 }} />
+        {/* Rodapé de segurança para não cortar o conteúdo pela TabBar */}
+        <View style={{ height: 120 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -133,10 +108,13 @@ export default function PlanosScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF" },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
+  scrollContent: { 
+    paddingHorizontal: 20, 
+    paddingTop: Platform.OS === "android" ? 40 : 10 
+  },
   header: {
-    paddingTop: Platform.OS === "android" ? 50 : 20,
     marginBottom: 30,
+    marginTop: 20
   },
   brandTitle: {
     fontSize: 24,
@@ -149,50 +127,49 @@ const styles = StyleSheet.create({
   planCard: {
     backgroundColor: "#FFF",
     borderRadius: 22,
-    padding: 16,
+    padding: 18,
     marginBottom: 16,
     borderWidth: 2,
     borderColor: "#E2E8F0",
-  },
-  selectedShadow: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
+    // Sombras para iOS
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 5,
+    shadowRadius: 10,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
   },
   colorBar: {
-    width: 6,
-    height: 40,
-    borderRadius: 3,
+    width: 5,
+    height: 35,
+    borderRadius: 10,
     marginRight: 15,
   },
   textInfo: { flex: 1 },
   planName: { fontSize: 18, fontWeight: "900" },
   planDesc: { fontSize: 12, color: "#94a3b8", marginTop: 2, fontWeight: "600" },
-  priceContainer: { alignItems: "flex-end" },
+  priceContainer: { alignItems: "flex-end", marginLeft: 10 },
   planPrice: { fontSize: 16, fontWeight: "900", color: "#1e293b" },
 
   expandedArea: {
-    marginTop: 15,
-    justifyContent: "center",
-    overflow: "hidden",
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    paddingTop: 15,
   },
   subscribeBtn: {
-    height: 45,
-    borderRadius: 12,
+    height: 50,
+    borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
+    elevation: 3,
   },
   subscribeBtnText: {
     color: "#FFF",
     fontWeight: "900",
-    fontSize: 13,
+    fontSize: 14,
     letterSpacing: 1,
   },
 });

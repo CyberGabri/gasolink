@@ -10,153 +10,139 @@ import {
   StatusBar,
   Pressable,
   Image,
+  Modal,
+  Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { MotiView, MotiText, AnimatePresence } from "moti";
+import { Ionicons } from "@expo/vector-icons";
 
-import { GasoInput } from "../../components/GasoInput"; // Ajuste o caminho se necessário
+import { GasoInput } from "../../components/GasoInput";
 import { GasoButton } from "../../components/GasoButton";
 import { COLORS } from "../../constants/Colors";
-
-
 import LogoIcon from "../../assets/logo/logo.png";
 
-const { height } = Dimensions.get("window");
+const { height, width } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMsg, setModalMsg] = useState("");
+  const [currentMessage, setCurrentMessage] = useState(0);
+  const fadeAnim = useState(new Animated.Value(0))[0];
 
   const messages = [
     "Bem-vindo ao Gasolink!",
-    "Acompanhe seus abastecimentos.",
     "Economize tempo e dinheiro.",
-    "Controle seu veículo facilmente."
+    "Controle seu veículo facilmente.",
   ];
-  const [currentMessage, setCurrentMessage] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const timer = setInterval(() => {
       setCurrentMessage((prev) => (prev + 1) % messages.length);
+      fadeAnim.setValue(0);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
     }, 3000);
-    return () => clearInterval(interval);
+
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+
+    return () => clearInterval(timer);
   }, []);
 
   const handleLogin = () => {
-    // Aqui você faria a lógica de autenticação
-    console.log({ email, password });
-    // Navega para a home-screen dentro de (tabs)
-    router.replace("/(tabs)/home-screen");
+    try {
+      router.replace("/home");
+    } catch {
+      setModalMsg("Erro ao navegar. Verifique a rota de destino.");
+      setModalVisible(true);
+    }
   };
 
   return (
     <View style={styles.main}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+
+      <Modal transparent visible={modalVisible} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Ionicons name="alert-circle" size={44} color="#ef4444" />
+            <Text style={styles.modalTitle}>Atenção</Text>
+            <Text style={styles.modalText}>{modalMsg}</Text>
+            <Pressable
+              style={styles.modalButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Entendido</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          bounces={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* HEADER ANIMADO COM LOGO */}
-          <MotiView
-            from={{
-              height: height * 0.45,
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
-            }}
-            animate={{
-              height: height * 0.38,
-              borderBottomLeftRadius: 60,
-              borderBottomRightRadius: 60,
-            }}
-            transition={{ type: "timing", duration: 800 }}
-            style={styles.header}
-          >
-            <MotiView
-              from={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 300, type: "spring" }}
-              style={styles.logoContainer}
-            >
-              <Image 
-                source={LogoIcon} 
-                style={styles.logoImage} 
-                resizeMode="contain" 
-              />
-              <Text style={styles.logoText}>GasoLink</Text>
-            </MotiView>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          <View style={styles.header}>
+            <Image
+              source={LogoIcon}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.logoText}>GasoLink</Text>
 
-            {/* TEXTO ROTATIVO COM ANIMAÇÃO DE TROCA */}
-            <View style={styles.messageWrapper}>
-              <AnimatePresence exitBeforeEnter>
-                <MotiText
-                  key={currentMessage}
-                  from={{ opacity: 0, translateY: 10 }}
-                  animate={{ opacity: 1, translateY: 0 }}
-                  exit={{ opacity: 0, translateY: -10 }}
-                  transition={{ type: "timing", duration: 500 }}
-                  style={styles.animatedText}
-                >
-                  {messages[currentMessage]}
-                </MotiText>
-              </AnimatePresence>
-            </View>
-          </MotiView>
+            <Animated.View style={{ opacity: fadeAnim, marginTop: 10 }}>
+              <Text style={styles.animatedText}>
+                {messages[currentMessage]}
+              </Text>
+            </Animated.View>
+          </View>
 
-          {/* FORMULÁRIO DE LOGIN */}
           <View style={styles.formCard}>
-            <MotiView
-               from={{ opacity: 0, translateY: 20 }}
-               animate={{ opacity: 1, translateY: 0 }}
-               transition={{ delay: 600 }}
+            <Text style={styles.title}>Olá novamente!</Text>
+            <Text style={styles.subtitle}>
+              Acesse sua conta para continuar.
+            </Text>
+
+            <GasoInput label="E-mail" value={email} onChangeText={setEmail} />
+            <GasoInput
+              label="Senha"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+
+            <Pressable
+              style={styles.forgot}
+              onPress={() => {
+                setModalMsg("Recuperação de senha em breve.");
+                setModalVisible(true);
+              }}
             >
-              <Text style={styles.title}>Olá novamente!</Text>
-              <Text style={styles.subtitle}>Acesse sua conta para continuar.</Text>
+              <Text style={styles.forgotText}>Esqueceu a senha?</Text>
+            </Pressable>
 
-              <GasoInput
-                label="E-mail"
-                placeholder="seu@email.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-              />
+            <GasoButton title="Entrar na Conta" onPress={handleLogin} />
 
-              <GasoInput
-                label="Senha"
-                placeholder="••••••••"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
-
-              <View style={{ marginTop: 10 }}>
-                <GasoButton title="Entrar na Conta" onPress={handleLogin} />
-              </View>
-            </MotiView>
-
-            {/* BOTÃO DE CADASTRO */}
-            <MotiView
-              from={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1000 }}
-              style={styles.footerBtnContainer}
+            <Pressable
+              style={styles.footerBtn}
+              onPress={() => router.push("/registro")}
             >
-              <Pressable
-                style={styles.footerBtn}
-                onPress={() => router.push("/registro")}
-              >
-                <Text style={styles.footerText}>
-                  Não tem conta? <Text style={styles.bold}>Cadastre-se</Text>
-                </Text>
-              </Pressable>
-            </MotiView>
+              <Text style={styles.footerText}>
+                Não tem conta?{" "}
+                <Text style={styles.footerHighlight}>Cadastre-se</Text>
+              </Text>
+            </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -165,70 +151,56 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  main: { flex: 1, backgroundColor: COLORS?.white || "#FFF" },
+  main: { flex: 1, backgroundColor: "#FFF" },
   header: {
-    backgroundColor: COLORS?.primary || "#000",
+    height: height * 0.38,
+    backgroundColor: COLORS.primary,
     justifyContent: "center",
     alignItems: "center",
-    overflow: "hidden",
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 40,
+    borderBottomLeftRadius: 60,
+    borderBottomRightRadius: 60,
   },
-  logoContainer: { alignItems: "center" },
-  logoImage: {
-    width: 80, 
-    height: 80,
-    marginBottom: 8,
-  },
+  logoImage: { width: 80, height: 80 },
   logoText: {
     color: "#FFF",
     fontSize: 26,
     fontWeight: "900",
-    letterSpacing: 3,
-    textTransform: "uppercase",
-  },
-  messageWrapper: {
-    height: 30, 
-    marginTop: 15,
-    justifyContent: 'center',
-    alignItems: 'center'
+    letterSpacing: 2,
   },
   animatedText: {
-    color: "rgba(255,255,255,0.8)",
-    fontSize: 14,
-    fontWeight: "600",
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 13,
     textAlign: "center",
-    paddingHorizontal: 40,
   },
-  formCard: { 
-    flex: 1, 
-    paddingHorizontal: 30, 
-    paddingTop: 35 
+  formCard: { flex: 1, padding: 30 },
+  title: { fontSize: 28, fontWeight: "900", color: "#0f172a" },
+  subtitle: { fontSize: 15, color: "#64748b", marginBottom: 20 },
+  forgot: { alignSelf: "flex-end", marginBottom: 15 },
+  forgotText: { color: "#3b82f6", fontWeight: "700" },
+  footerBtn: { marginTop: 30, alignItems: "center" },
+  footerText: { color: "#64748b" },
+  footerHighlight: { fontWeight: "900", color: COLORS.primary },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.8)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  title: { 
-    fontSize: 28, 
-    fontWeight: "800", 
-    color: COLORS?.text || "#1a1a1a" 
+  modalContent: {
+    width: width * 0.8,
+    backgroundColor: "#FFF",
+    borderRadius: 25,
+    padding: 30,
+    alignItems: "center",
   },
-  subtitle: {
-    fontSize: 15,
-    color: COLORS?.secondaryText || "#666",
-    marginBottom: 30,
-    marginTop: 5,
+  modalTitle: { fontSize: 20, fontWeight: "900", marginTop: 10 },
+  modalText: { textAlign: "center", marginVertical: 15, color: "#64748b" },
+  modalButton: {
+    backgroundColor: "#0f172a",
+    paddingVertical: 12,
+    borderRadius: 12,
+    width: "100%",
+    alignItems: "center",
   },
-  footerBtnContainer: {
-    marginTop: 'auto', 
-    paddingBottom: 30,
-  },
-  footerBtn: { 
-    marginTop: 20, 
-    alignItems: "center" 
-  },
-  footerText: { 
-    color: "#666", 
-    fontSize: 14 
-  },
-  bold: { 
-    color: COLORS?.primary || "#000", 
-    fontWeight: "800" 
-  },
+  modalButtonText: { color: "#FFF", fontWeight: "700" },
 });

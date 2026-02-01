@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "gasolink",
-    "slug": "gasolink",
-    "version": "3.0.0",
+    "name": "Gasolink",
+    "slug": "Gasolink",
+    "version": "30.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "gasolink",
@@ -13,7 +13,7 @@
     "splash": {
       "image": "./assets/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#ffffff"
     },
     "android": {
       "package": "com.dalva.gasolink",
@@ -32,7 +32,7 @@
       }
     },
     "plugins": [
-      "react-native-video"
+      "expo-router"
     ]
   }
 }

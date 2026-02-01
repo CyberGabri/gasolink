@@ -12,9 +12,10 @@ import {
   Pressable,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { MotiView, MotiText } from "moti";
+import { MotiView, MotiText, AnimatePresence } from "moti";
 import { useRouter } from "expo-router";
 
+// Centralizando as cores para evitar 'undefined'
 const COLORS = {
   primary: "#3b82f6",
   secondary: "#1e293b",
@@ -30,26 +31,28 @@ export default function PerfilScreen() {
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
 
-  const handleLogout = () => {
-    setModalVisible(true);
-  };
-
+  // Navegação segura para o Logout
   const confirmLogout = () => {
     setModalVisible(false);
-    if (router.canGoBack()) router.dismissAll();
-    router.replace("/(tabs)");
+    // Timeout pequeno para o modal fechar antes da troca de rota (evita crash no Android)
+    setTimeout(() => {
+      if (router.canGoBack()) {
+        router.dismissAll();
+      }
+      router.replace("/"); // Altere para sua rota de Login real
+    }, 300);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* HEADER */}
         <MotiView
-          from={{ opacity: 0, translateY: -20 }}
+          from={{ opacity: 0, translateY: -10 }}
           animate={{ opacity: 1, translateY: 0 }}
           style={styles.header}
         >
@@ -64,7 +67,7 @@ export default function PerfilScreen() {
         {/* PERFIL PRINCIPAL */}
         <View style={styles.profileSection}>
           <MotiView
-            from={{ opacity: 0, scale: 0.5 }}
+            from={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: "spring", damping: 15 }}
             style={styles.avatarWrapper}
@@ -75,7 +78,7 @@ export default function PerfilScreen() {
             <MotiView
               from={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 500 }}
+              transition={{ delay: 400 }}
               style={styles.verifiedBadge}
             >
               <Ionicons name="checkmark" size={14} color="#FFF" />
@@ -83,8 +86,8 @@ export default function PerfilScreen() {
           </MotiView>
 
           <MotiText
-            from={{ opacity: 0, translateY: 10 }}
-            animate={{ opacity: 1, translateY: 0 }}
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             style={styles.userName}
           >
             Dalvan
@@ -102,18 +105,18 @@ export default function PerfilScreen() {
           </MotiView>
         </View>
 
-        {/* STATS CARDS */}
+        {/* STATS CARDS - Renderização Simples para Performance */}
         <View style={styles.statsRow}>
-          <StatBox label="Economia" value="450€" icon="cash-check" delay={400} />
-          <StatBox label="Abastecidas" value="12" icon="gas-station" delay={500} />
-          <StatBox label="Km totais" value="1.240" icon="map-marker-distance" delay={600} />
+          <StatBox label="Economia" value="R$ 450" icon="cash-check" delay={300} />
+          <StatBox label="Abastecidas" value="12" icon="gas-station" delay={400} />
+          <StatBox label="Km totais" value="1.240" icon="map-marker-distance" delay={500} />
         </View>
 
         {/* MENU */}
         <MotiView
-          from={{ opacity: 0, translateY: 40 }}
+          from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
-          transition={{ delay: 700, type: "timing" }}
+          transition={{ delay: 600 }}
           style={styles.menuContainer}
         >
           <Text style={styles.menuTitle}>Definições de Conta</Text>
@@ -125,7 +128,7 @@ export default function PerfilScreen() {
 
           <TouchableOpacity
             style={styles.logoutBtn}
-            onPress={handleLogout}
+            onPress={() => setModalVisible(true)}
             activeOpacity={0.8}
           >
             <View style={styles.logoutIconBg}>
@@ -134,56 +137,56 @@ export default function PerfilScreen() {
             <Text style={styles.logoutText}>Encerrar Sessão</Text>
           </TouchableOpacity>
         </MotiView>
+        
+        {/* Espaço extra para a Tab Bar flutuante */}
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* MODAL MODERNO */}
-      <Modal transparent animationType="fade" visible={modalVisible}>
+      {/* MODAL COM ANIMATE PRESENCE */}
+      <Modal transparent animationType="fade" visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <Pressable style={styles.overlay} onPress={() => setModalVisible(false)}>
-          <MotiView
-            from={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            style={styles.modalContent}
-          >
-            <Ionicons name="alert-circle" size={50} color={COLORS.danger} />
-            <Text style={styles.modalTitle}>Confirmação de Logout</Text>
-            <Text style={styles.modalText}>
-              Tens a certeza que desejas sair da tua conta Gasolink?
-            </Text>
-            <View style={styles.modalBtnsRow}>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#f1f5f9" }]}
-                onPress={() => setModalVisible(false)}
+          <AnimatePresence>
+            {modalVisible && (
+              <MotiView
+                from={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                style={styles.modalContent}
               >
-                <Text style={{ color: COLORS.secondary, fontWeight: "700" }}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: COLORS.danger }]}
-                onPress={confirmLogout}
-              >
-                <Text style={{ color: "#fff", fontWeight: "700" }}>Sair</Text>
-              </TouchableOpacity>
-            </View>
-          </MotiView>
+                <Ionicons name="alert-circle" size={50} color={COLORS.danger} />
+                <Text style={styles.modalTitle}>Sair da Conta?</Text>
+                <Text style={styles.modalText}>
+                  Tens a certeza que desejas encerrar a tua sessão no Gasolink?
+                </Text>
+                <View style={styles.modalBtnsRow}>
+                  <TouchableOpacity
+                    style={[styles.modalBtn, { backgroundColor: "#f1f5f9" }]}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={{ color: COLORS.secondary, fontWeight: "700" }}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalBtn, { backgroundColor: COLORS.danger }]}
+                    onPress={confirmLogout}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "700" }}>Sair</Text>
+                  </TouchableOpacity>
+                </View>
+              </MotiView>
+            )}
+          </AnimatePresence>
         </Pressable>
       </Modal>
     </SafeAreaView>
   );
 }
 
-// COMPONENTES AUXILIARES
-interface StatBoxProps {
-  label: string;
-  value: string;
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
-  delay: number;
-}
-
-const StatBox = ({ label, value, icon, delay }: StatBoxProps) => (
+// COMPONENTES AUXILIARES PROTEGIDOS
+const StatBox = ({ label, value, icon, delay }: any) => (
   <MotiView
     from={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
-    transition={{ delay }}
+    transition={{ delay, type: 'timing' }}
     style={styles.statBox}
   >
     <MaterialCommunityIcons name={icon} size={24} color={COLORS.primary} />
@@ -192,12 +195,7 @@ const StatBox = ({ label, value, icon, delay }: StatBoxProps) => (
   </MotiView>
 );
 
-interface MenuItemProps {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-}
-
-const MenuItem = ({ icon, label }: MenuItemProps) => (
+const MenuItem = ({ icon, label }: any) => (
   <TouchableOpacity style={styles.menuItem} activeOpacity={0.6}>
     <View style={styles.menuLeft}>
       <Ionicons name={icon} size={22} color={COLORS.secondary} />
@@ -209,12 +207,12 @@ const MenuItem = ({ icon, label }: MenuItemProps) => (
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 60 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: Platform.OS === 'android' ? 10 : 0 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: Platform.OS === "android" ? 45 : 10,
+    marginTop: Platform.OS === "android" ? 20 : 10,
     marginBottom: 10,
     height: 60,
   },
@@ -228,9 +226,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     elevation: 2,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
   },
   settingsBtn: { padding: 5 },
   profileSection: { alignItems: "center", marginBottom: 30 },
@@ -280,22 +277,17 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
   },
-  statValue: { fontSize: 15, fontWeight: "800", color: COLORS.secondary, marginTop: 10 },
+  statValue: { fontSize: 14, fontWeight: "800", color: COLORS.secondary, marginTop: 10 },
   statLabel: { fontSize: 10, color: COLORS.textSecondary, fontWeight: "600", marginTop: 4 },
   menuContainer: {
     marginTop: 20,
     backgroundColor: "#fff",
     borderRadius: 28,
     padding: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 20,
+    elevation: 2,
   },
-  menuTitle: { fontSize: 13, fontWeight: "700", color: COLORS.textSecondary, marginBottom: 10 },
+  menuTitle: { fontSize: 12, fontWeight: "700", color: COLORS.textSecondary, marginBottom: 10 },
   menuItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -310,9 +302,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginTop: 20,
-    paddingVertical: 12,
-    backgroundColor: "#fef2f2",
-    borderRadius: 15,
+    paddingVertical: 14,
+    backgroundColor: "#fff5f5",
+    borderRadius: 18,
     paddingHorizontal: 15,
   },
   logoutIconBg: {
@@ -324,34 +316,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logoutText: { marginLeft: 12, color: COLORS.danger, fontWeight: "700", fontSize: 15 },
-
-  /* MODAL */
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContent: {
     width: "85%",
     padding: 25,
-    borderRadius: 20,
+    borderRadius: 24,
     backgroundColor: "#fff",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 12,
-    elevation: 10,
   },
-  modalTitle: { fontSize: 18, fontWeight: "700", marginTop: 12, marginBottom: 6, textAlign: "center" },
-  modalText: { fontSize: 13, color: "#64748b", textAlign: "center", marginBottom: 20 },
-  modalBtnsRow: { flexDirection: "row", justifyContent: "space-between", width: "100%" },
+  modalTitle: { fontSize: 18, fontWeight: "800", marginTop: 15, color: COLORS.secondary },
+  modalText: { fontSize: 14, color: COLORS.textSecondary, textAlign: "center", marginVertical: 15, lineHeight: 20 },
+  modalBtnsRow: { flexDirection: "row", gap: 10 },
   modalBtn: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginHorizontal: 5,
+    height: 50,
+    borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
   },
