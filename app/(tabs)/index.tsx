@@ -36,6 +36,8 @@ export default function LoginScreen() {
     "Bem-vindo ao Gasolink!",
     "Economize tempo e dinheiro.",
     "Controle seu veículo facilmente.",
+    "Segurança ao abastecer"
+    
   ];
 
   useEffect(() => {
