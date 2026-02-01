@@ -9,12 +9,16 @@ import {
   ScrollView,
   StatusBar,
   Pressable,
+  Image, // Adicionado Image
 } from "react-native";
 import { useRouter } from "expo-router";
 
 import { GasoInput } from "../../components/GasoInput";
 import { GasoButton } from "../../components/GasoButton";
 import { COLORS } from "../../constants/Colors";
+
+// Importando a logo real
+import LogoIcon from "../../assets/logo/logo.png";
 
 const { height } = Dimensions.get("window");
 
@@ -58,9 +62,12 @@ export default function RegisterScreen() {
         >
           <View style={styles.header}>
             <View style={styles.logoContainer}>
-              <View style={styles.logoSquare}>
-                <View style={styles.logoCircle} />
-              </View>
+              {/* SUBSTITUÍDO O QUADRADO PELA LOGO PNG */}
+              <Image 
+                source={LogoIcon} 
+                style={styles.logoImage} 
+                resizeMode="contain" 
+              />
               <Text style={styles.logoText}>GasoLink</Text>
             </View>
           </View>
@@ -120,20 +127,10 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 50,
   },
   logoContainer: { alignItems: "center" },
-  logoSquare: {
-    width: 50,
-    height: 50,
-    backgroundColor: COLORS.white,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
+  logoImage: {
+    width: 70,  // Um pouco menor que no Login para caber melhor no cabeçalho de registro
+    height: 70,
     marginBottom: 8,
-  },
-  logoCircle: {
-    width: 22,
-    height: 22,
-    backgroundColor: COLORS.primary,
-    borderRadius: 11,
   },
   logoText: {
     color: COLORS.white,

@@ -2,13 +2,37 @@
   "expo": {
     "name": "gasolink",
     "slug": "gasolink",
-    "version": "1.0.0",
+    "version": "3.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png", // Verifique se este arquivo existe nesta pasta
     "userInterfaceStyle": "light",
+    "scheme": "gasolink",
     "assetBundlePatterns": [
       "**/*"
+    ],
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "android": {
+      "package": "com.dalva.gasolink",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.dalva.gasolink",
+      "supportsTablet": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "973de4ba-cde4-47a8-b766-700384cc22d6"
+      }
+    },
+    "plugins": [
+      "react-native-video"
     ]
-    // ... restante do código
   }
 }
