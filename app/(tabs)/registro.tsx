@@ -9,6 +9,7 @@ import {
   ScrollView,
   StatusBar,
   Pressable,
+  ImageBackground,
 } from "react-native";
 import { useRouter } from "expo-router";
 
@@ -27,6 +28,7 @@ export default function RegisterScreen() {
 
   const handleRegister = () => {
     if (!name || !email || !password) return;
+    // Lógica de registro aqui
     router.replace("/login");
   };
 
@@ -42,33 +44,39 @@ export default function RegisterScreen() {
     <View style={styles.main}>
       <StatusBar
         barStyle="light-content"
-        backgroundColor="#000"
-        animated={false}
+        translucent
+        backgroundColor="transparent"
       />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={{ flexGrow: 1 }}
           bounces={false}
-          showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* HEADER MAIOR E PRETO */}
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
+          {/* HEADER COM IMAGEM (IGUAL AO LOGIN) */}
+          <ImageBackground
+            source={{
+              uri: "https://images.unsplash.com/photo-1545147458-7182281a942a?q=80&w=1200",
+            }}
+            style={styles.header}
+          >
+            <View style={styles.overlay}>
               <Text style={styles.logoText}>GasoLink</Text>
-              <View style={styles.divider} />
-              <Text style={styles.headerTagline}>CRIE SUA CONTA</Text>
+              <View style={styles.animationContainer}>
+                <Text style={styles.tagline}>CRIE SUA CONTA AGORA</Text>
+              </View>
             </View>
-          </View>
+          </ImageBackground>
 
+          {/* CARD BRANCO QUE SOBE SOBRE A IMAGEM */}
           <View style={styles.formCard}>
-            <Text style={styles.title}>Criar Conta</Text>
+            <Text style={styles.title}>Cadastre-se</Text>
             <Text style={styles.subtitle}>
-              Preencha os dados abaixo para começar.
+              Preencha os campos para criar seu perfil.
             </Text>
 
             <GasoInput
@@ -95,11 +103,17 @@ export default function RegisterScreen() {
               onChangeText={setPassword}
             />
 
-            <GasoButton title="Finalizar Cadastro" onPress={handleRegister} />
+            <View style={{ marginTop: 10 }}>
+              <GasoButton 
+                title="Finalizar Cadastro" 
+                onPress={handleRegister} 
+              />
+            </View>
 
             <Pressable style={styles.footerBtn} onPress={handleGoBack}>
               <Text style={styles.footerText}>
-                Já tem uma conta? <Text style={styles.bold}>Entrar</Text>
+                Já tem uma conta?{" "}
+                <Text style={styles.footerHighlight}>Entrar</Text>
               </Text>
             </Pressable>
           </View>
@@ -110,81 +124,62 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  main: { 
-    flex: 1, 
-    backgroundColor: "#FFF" 
-  },
-  keyboardView: { 
-    flex: 1 
-  },
-  scrollContent: { 
-    flexGrow: 1,
-    backgroundColor: "#FFF"
-  },
+  main: { flex: 1, backgroundColor: "#000" },
   header: {
-    height: height * 0.35, // Aumentado de 0.22 para 0.35 (mais de 1/3 da tela)
-    backgroundColor: "#000", // Fundo preto escuro conforme pedido
+    height: height * 0.40, // Mantendo proporção similar ao login
     justifyContent: "center",
     alignItems: "center",
-    borderBottomLeftRadius: 60, // Arredondamento maior para combinar com o tamanho
-    borderBottomRightRadius: 60,
-    elevation: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 15,
-    zIndex: 10,
   },
-  logoContainer: { 
-    alignItems: "center" 
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.65)", // Overlay escuro
+    justifyContent: "center",
+    alignItems: "center",
   },
   logoText: {
     color: "#FFF",
-    fontSize: 42, // Texto maior para preencher o novo espaço
+    fontSize: 52,
     fontWeight: "900",
-    letterSpacing: -1,
+    letterSpacing: -2,
   },
-  divider: {
-    width: 45,
-    height: 4,
-    backgroundColor: "#3b82f6", // Um toque de azul para destaque
-    marginVertical: 10,
-    borderRadius: 2,
-  },
-  headerTagline: {
-    color: "rgba(255,255,255,0.6)",
+  animationContainer: { marginTop: 10 },
+  tagline: {
+    color: "#3b82f6", // Azul para destaque
     fontSize: 12,
     fontWeight: "800",
-    letterSpacing: 4,
+    letterSpacing: 3,
   },
   formCard: {
     flex: 1,
     paddingHorizontal: 30,
-    paddingTop: 35,
+    paddingTop: 40,
     backgroundColor: "#FFF",
+    marginTop: -60, // Efeito de subir sobre o header
+    borderTopLeftRadius: 50,
+    borderTopRightRadius: 50,
+    minHeight: height * 0.6,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#0f172a",
+  title: { 
+    fontSize: 28, 
+    fontWeight: "900", 
+    color: "#0f172a" 
   },
-  subtitle: {
-    fontSize: 15,
+  subtitle: { 
+    fontSize: 15, 
+    color: "#64748b", 
+    marginBottom: 25 
+  },
+  footerBtn: { 
+    marginTop: 20, 
+    marginBottom: 40, 
+    alignItems: "center" 
+  },
+  footerText: { 
     color: "#64748b",
-    marginBottom: 25,
-    marginTop: 5,
+    fontSize: 14 
   },
-  footerBtn: {
-    marginTop: 15,
-    alignItems: "center",
-    paddingBottom: 40,
-  },
-  footerText: {
-    color: "#64748b",
-    fontSize: 14,
-  },
-  bold: {
-    color: "#3b82f6",
-    fontWeight: "800",
+  footerHighlight: { 
+    fontWeight: "900", 
+    color: "#3b82f6" 
   },
 });
