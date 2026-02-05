@@ -42,6 +42,9 @@ const TABS: TabType[] = [
 const TAB_WIDTH = width / TABS.length;
 const TAB_BAR_HEIGHT = 70;
 
+// CONFIGURAÇÃO DOS LIMITES ATUALIZADA PARA 7
+const MAX_CLICKS = 7;
+
 export default function HomeScreen() {
   const [isReady, setIsReady] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -79,9 +82,9 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
   const router = useRouter();
   const [currentTab, setCurrentTab] = useState<TabType>("inicio");
   const [modalVisible, setModalVisible] = useState(false);
-  const [visitedTabs, setVisitedTabs] = useState<Set<TabType>>(
-    new Set(["inicio"]),
-  );
+
+  // Contador de cliques para visitantes
+  const [clickCount, setClickCount] = useState(0);
 
   const insets = useSafeAreaInsets();
   const activeColor = "#3b82f6";
@@ -97,9 +100,7 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
       sound.setOnPlaybackStatusUpdate(
         (s: any) => s.didJustFinish && sound.unloadAsync(),
       );
-    } catch (e) {
-      // Silenciar erro se o áudio falhar ou o arquivo não existir
-    }
+    } catch (e) {}
   }, []);
 
   useEffect(() => {
@@ -115,14 +116,20 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
   }));
 
   const handleTabPress = (tab: TabType) => {
+    if (tab === currentTab) return; // Evita contar clique na mesma aba
+
     playClick();
+
     if (!isLoggedIn) {
-      const newVisited = new Set(visitedTabs).add(tab);
-      setVisitedTabs(newVisited);
-      if (newVisited.size >= TABS.length) {
+      // Se ele já clicou 7 vezes e tenta o 8º, bloqueia
+      if (clickCount >= MAX_CLICKS) {
         setModalVisible(true);
+        return;
       }
+      // Incrementa o contador
+      setClickCount((prev) => prev + 1);
     }
+
     setCurrentTab(tab);
   };
 
@@ -152,7 +159,6 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
             GASOLINK <Text style={{ color: activeColor }}>AI</Text>
           </Text>
           <View style={styles.carBadge}>
-            {/* CORRIGIDO: Agora usando Ionicons sparkles corretamente */}
             {isLoggedIn ? (
               <MaterialCommunityIcons
                 name="shield-check"
@@ -168,16 +174,18 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
                 { color: isLoggedIn ? "#10b981" : "#94a3b8" },
               ]}
             >
-              {isLoggedIn ? "CONEXÃO ATIVA" : "MODO VISITANTE"}
+              {isLoggedIn
+                ? "CONEXÃO ATIVA"
+                : `MODO TESTE (${MAX_CLICKS - clickCount} cliques restantes)`}
             </Text>
           </View>
         </View>
 
         <TouchableOpacity
           style={styles.proBadge}
-          onPress={() => !isLoggedIn && setModalVisible(true)}
+          onPress={() => router.push("/login")}
         >
-          <Text style={styles.proText}>{isLoggedIn ? "PRO+" : "Plano"}</Text>
+          <Text style={styles.proText}>{isLoggedIn ? "PRO+" : "ENTRAR"}</Text>
         </TouchableOpacity>
       </View>
 
@@ -194,15 +202,6 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
             {renderScreen()}
           </MotiView>
         </AnimatePresence>
-
-        {!isLoggedIn && (
-          <View
-            style={StyleSheet.absoluteFill}
-            pointerEvents="box-none"
-            onStartShouldSetResponder={() => true}
-            onResponderRelease={() => setModalVisible(true)}
-          />
-        )}
       </View>
 
       {/* Tab Bar */}
@@ -262,31 +261,25 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
       </View>
 
       {/* Modal Bloqueio */}
-      <Modal transparent visible={modalVisible} animationType="fade">
+      <Modal transparent visible={modalVisible} animationType="slide">
         <View style={styles.overlay}>
           <MotiView
-            from={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+            from={{ translateY: 300 }}
+            animate={{ translateY: 0 }}
             style={styles.blackModal}
           >
             <View style={styles.lockContainer}>
-              <MotiView
-                from={{ translateY: -12 }}
-                animate={{ translateY: 0 }}
-                transition={{ type: "spring", damping: 12, delay: 200 }}
-                style={styles.lockShackle}
-              />
               <View style={styles.lockBody}>
-                <MaterialCommunityIcons name="lock" size={32} color="#FFF" />
+                <MaterialCommunityIcons name="lock" size={32} color="#3b82f6" />
               </View>
             </View>
 
-            <Text style={styles.modalBrand}>GASOLINK</Text>
-            <Text style={styles.modalTitle}>Acesso Restrito</Text>
+            <Text style={styles.modalBrand}>GASOLINK AI</Text>
+            <Text style={styles.modalTitle}>Acesso Expirado</Text>
 
             <Text style={styles.modalDescription}>
-              Faça login para salvar seus veículos e acessar recursos exclusivos
-              de inteligência.
+              Você aproveitou seus 7 cliques de teste! Para continuar
+              gerenciando seu veículo e economizando, entre na sua conta.
             </Text>
 
             <TouchableOpacity
@@ -296,14 +289,13 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
                 router.push("/login");
               }}
             >
-              <Text style={styles.loginBtnText}>FAZER LOGIN</Text>
+              <Text style={styles.loginBtnText}>CRIAR CONTA OU ENTRAR</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => {
                 setModalVisible(false);
-                setCurrentTab("inicio");
-                setVisitedTabs(new Set(["inicio"]));
+                // Opcional: manter ele na home se quiser, mas sem poder navegar
               }}
               style={styles.laterBtn}
             >
@@ -316,7 +308,6 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
   );
 }
 
-// Funções auxiliares
 function getIcon(tab: TabType, active: boolean): any {
   const icons: Record<TabType, string> = {
     inicio: "flash",
@@ -331,7 +322,7 @@ function getLabel(tab: TabType): string {
   const labels: Record<TabType, string> = {
     inicio: "Home",
     "veiculo-config": "Veículo",
-    financeiro: "Plano",
+    financeiro: "Financeiro",
     "perfil-user": "Perfil",
   };
   return labels[tab];
@@ -359,7 +350,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
   },
-  proText: { color: "#FFD700", fontWeight: "900", fontSize: 11 },
+  proText: { color: "#FFF", fontWeight: "900", fontSize: 11 },
   content: { flex: 1 },
   tabBarContainer: {
     position: "absolute",
@@ -376,81 +367,58 @@ const styles = StyleSheet.create({
   topLine: { position: "absolute", top: -1, width: width / 4, height: 3 },
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.95)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "flex-end",
   },
   blackModal: {
-    width: "85%",
-    backgroundColor: "#050505",
-    borderRadius: 35,
+    backgroundColor: "#FFF",
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
     padding: 30,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#1a1a1a",
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
   },
-  lockContainer: {
-    height: 90,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  lockShackle: {
-    width: 38,
-    height: 40,
-    borderWidth: 5,
-    borderColor: "#FFF",
-    borderTopLeftRadius: 19,
-    borderTopRightRadius: 19,
-    borderBottomWidth: 0,
-    marginBottom: -15,
-    opacity: 0.9,
-  },
+  lockContainer: { marginBottom: 15 },
   lockBody: {
-    width: 65,
-    height: 55,
-    backgroundColor: "#111",
-    borderRadius: 12,
+    width: 60,
+    height: 60,
+    backgroundColor: "#f0f7ff",
+    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#333",
   },
   modalBrand: {
-    color: "#FFF",
+    color: "#3b82f6",
     fontWeight: "900",
-    fontSize: 14,
-    letterSpacing: 4,
+    fontSize: 12,
+    letterSpacing: 2,
     marginBottom: 10,
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "900",
-    color: "#FFF",
+    color: "#0f172a",
     marginBottom: 12,
   },
   modalDescription: {
-    color: "#888",
+    color: "#64748b",
     textAlign: "center",
     fontSize: 14,
     lineHeight: 22,
     marginBottom: 30,
   },
   loginBtn: {
-    backgroundColor: "#000",
+    backgroundColor: "#0f172a",
     width: "100%",
     paddingVertical: 18,
     borderRadius: 18,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#333",
   },
-  loginBtnText: {
-    color: "#FFF",
-    fontWeight: "900",
-    fontSize: 14,
-    letterSpacing: 1,
-  },
-  laterBtn: { marginTop: 25 },
-  laterText: { color: "#444", fontWeight: "700", fontSize: 12 },
+  loginBtnText: { color: "#FFF", fontWeight: "900", fontSize: 14 },
+  laterBtn: { marginTop: 20, marginBottom: 10 },
+  laterText: { color: "#94a3b8", fontWeight: "700", fontSize: 12 },
 });

@@ -18,9 +18,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { GasoInput } from "../../components/GasoInput";
 import { GasoButton } from "../../components/GasoButton";
-import { COLORS } from "../../constants/Colors";
 
-const { height } = Dimensions.get("window");
+const { height, width } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -29,16 +28,16 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState(false);
 
+  const [isVerifying, setIsVerifying] = useState(true);
   const [isOpeningActive, setIsOpeningActive] = useState(true);
   const [currentMessage, setCurrentMessage] = useState(0);
 
-  // Referências de animação
-  const shakeAnimation = useRef(new Animated.Value(0)).current;
   const contentFade = useRef(new Animated.Value(0)).current;
   const openingViewOpacity = useRef(new Animated.Value(1)).current;
-  const logoY = useRef(new Animated.Value(30)).current;
+  const logoY = useRef(new Animated.Value(20)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const phraseFade = useRef(new Animated.Value(0)).current;
+  const shakeAnimation = useRef(new Animated.Value(0)).current;
 
   const messages = [
     "Bem-vindo ao Gasolink!",
@@ -47,42 +46,49 @@ export default function LoginScreen() {
   ];
 
   useEffect(() => {
-    AsyncStorage.getItem("loggedIn").then((value) => {
+    checkStatus();
+  }, []);
+
+  const checkStatus = async () => {
+    try {
+      const value = await AsyncStorage.getItem("loggedIn");
       if (value === "true") {
-        setIsOpeningActive(false);
-        contentFade.setValue(1);
         router.replace("/(tabs)/");
       } else {
+        setIsVerifying(false);
         startOpeningAnimation();
       }
-    });
-  }, []);
+    } catch (e) {
+      setIsVerifying(false);
+      startOpeningAnimation();
+    }
+  };
 
   const startOpeningAnimation = () => {
     Animated.sequence([
-      Animated.delay(400),
+      Animated.delay(100),
       Animated.parallel([
         Animated.timing(logoOpacity, {
           toValue: 1,
-          duration: 1000,
+          duration: 800,
           useNativeDriver: true,
         }),
         Animated.timing(logoY, {
           toValue: 0,
-          duration: 1000,
+          duration: 800,
           useNativeDriver: true,
         }),
       ]),
-      Animated.delay(1000),
+      Animated.delay(600),
       Animated.parallel([
         Animated.timing(openingViewOpacity, {
           toValue: 0,
-          duration: 800,
+          duration: 500,
           useNativeDriver: true,
         }),
         Animated.timing(contentFade, {
           toValue: 1,
-          duration: 1000,
+          duration: 700,
           useNativeDriver: true,
         }),
       ]),
@@ -95,24 +101,37 @@ export default function LoginScreen() {
   const startPhraseLoop = () => {
     Animated.timing(phraseFade, {
       toValue: 1,
-      duration: 800,
+      duration: 500,
       useNativeDriver: true,
     }).start();
     const interval = setInterval(() => {
       Animated.timing(phraseFade, {
         toValue: 0,
-        duration: 500,
+        duration: 400,
         useNativeDriver: true,
       }).start(() => {
         setCurrentMessage((prev) => (prev + 1) % messages.length);
         Animated.timing(phraseFade, {
           toValue: 1,
-          duration: 700,
+          duration: 600,
           useNativeDriver: true,
         }).start();
       });
     }, 4000);
     return () => clearInterval(interval);
+  };
+
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      triggerErrorAnimation();
+      return;
+    }
+    setIsLoading(true);
+    setTimeout(async () => {
+      await AsyncStorage.setItem("loggedIn", "true");
+      setIsLoading(false);
+      router.replace("/(tabs)/");
+    }, 1200);
   };
 
   const triggerErrorAnimation = () => {
@@ -129,39 +148,15 @@ export default function LoginScreen() {
         useNativeDriver: true,
       }),
       Animated.timing(shakeAnimation, {
-        toValue: 10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnimation, {
         toValue: 0,
         duration: 50,
         useNativeDriver: true,
       }),
     ]).start();
-    setTimeout(() => setErrors(false), 3000);
   };
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      triggerErrorAnimation();
-      return;
-    }
-
-    setIsLoading(true);
-
-    setTimeout(async () => {
-      try {
-        await AsyncStorage.setItem("loggedIn", "true");
-        setIsLoading(false);
-       
-        router.replace("/(tabs)/");
-      } catch (e) {
-        setIsLoading(false);
-        triggerErrorAnimation();
-      }
-    }, 1500);
-  };
+  if (isVerifying)
+    return <View style={{ flex: 1, backgroundColor: "#000000" }} />;
 
   return (
     <View style={styles.main}>
@@ -171,9 +166,9 @@ export default function LoginScreen() {
         backgroundColor="transparent"
       />
 
+      {/* Camada de Abertura - PRETO PURO */}
       {isOpeningActive && (
         <Animated.View
-          pointerEvents="none"
           style={[styles.openingOverlay, { opacity: openingViewOpacity }]}
         >
           <Animated.Text
@@ -188,21 +183,29 @@ export default function LoginScreen() {
       )}
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           bounces={false}
+          showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Animated.View style={{ flex: 1, opacity: contentFade }}>
+          <Animated.View
+            style={{
+              flex: 1,
+              opacity: contentFade,
+              backgroundColor: "#000000",
+            }}
+          >
             <ImageBackground
               source={{
                 uri: "https://images.unsplash.com/photo-1545147458-7182281a942a?q=80&w=1200",
               }}
               style={styles.header}
             >
+              {/* Overlay da imagem também em preto puro com opacidade controlada */}
               <View style={styles.overlay}>
                 <Text style={styles.logoText}>GasoLink</Text>
                 <Animated.View
@@ -245,27 +248,23 @@ export default function LoginScreen() {
                   }}
                   editable={!isLoading}
                 />
-
                 {errors && (
-                  <Text style={styles.errorText}>
-                    Preencha todos os campos para entrar
-                  </Text>
+                  <Text style={styles.errorText}>Preencha todos os campos</Text>
                 )}
               </Animated.View>
 
               <Pressable
                 style={styles.forgot}
-                onPress={() => !isLoading && router.push("/recuperar-senha")}
+                onPress={() => router.push("/recuperar-senha")}
               >
                 <Text style={styles.forgotText}>Esqueceu a senha?</Text>
               </Pressable>
 
               <GasoButton
                 title={isLoading ? "Carregando..." : "Entrar na Conta"}
-                onPress={() => !isLoading && handleLogin()}
+                onPress={handleLogin}
               />
 
-              {/* AJUSTE AQUI: O caminho correto para o index das tabs */}
               <TouchableOpacity
                 style={styles.skipBtn}
                 onPress={() => router.replace("/(tabs)/")}
@@ -275,7 +274,7 @@ export default function LoginScreen() {
 
               <Pressable
                 style={styles.footerBtn}
-                onPress={() => !isLoading && router.push("/registro")}
+                onPress={() => router.push("/registro")}
               >
                 <Text style={styles.footerText}>
                   Não tem conta?{" "}
@@ -291,40 +290,45 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  main: { flex: 1, backgroundColor: "#000" },
+  main: {
+    flex: 1,
+    backgroundColor: "#000000", // Preto absoluto
+  },
   openingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#000",
-    zIndex: 999,
+    backgroundColor: "#000000", // Preto absoluto
+    zIndex: 9999,
     justifyContent: "center",
     alignItems: "center",
   },
   logoOpening: {
-    color: "#FFF",
+    color: "#FFFFFF",
     fontSize: 55,
     fontWeight: "900",
     letterSpacing: -2,
   },
   header: {
     height: height * 0.45,
+    width: width,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#000000",
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.65)",
+    backgroundColor: "rgba(0, 0, 0, 0.7)", // Escurece a imagem com preto
     justifyContent: "center",
     alignItems: "center",
   },
   logoText: {
-    color: "#FFF",
+    color: "#FFFFFF",
     fontSize: 52,
     fontWeight: "900",
     letterSpacing: -2,
   },
   animationContainer: { height: 30, marginTop: 10 },
   animatedText: {
-    color: "#cbd5e1",
+    color: "#E2E8F0",
     fontSize: 16,
     textAlign: "center",
     fontWeight: "600",
@@ -333,30 +337,29 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 30,
     paddingTop: 40,
-    backgroundColor: "#FFF",
+    backgroundColor: "#FFFFFF",
     marginTop: -60,
     borderTopLeftRadius: 50,
     borderTopRightRadius: 50,
     minHeight: height * 0.6,
   },
-  title: { fontSize: 28, fontWeight: "900", color: "#0f172a" },
-  subtitle: { fontSize: 15, color: "#64748b", marginBottom: 25 },
+  title: { fontSize: 28, fontWeight: "900", color: "#0F172A" },
+  subtitle: { fontSize: 15, color: "#64748B", marginBottom: 25 },
   forgot: { alignSelf: "flex-end", marginBottom: 20 },
-  forgotText: { color: "#6366f1", fontWeight: "700" },
-  footerBtn: { marginTop: 15, marginBottom: 40, alignItems: "center" },
-  footerText: { color: "#64748b" },
-  footerHighlight: { fontWeight: "900", color: "#6366f1" },
+  forgotText: { color: "#6366F1", fontWeight: "700" },
+  footerBtn: { marginTop: 15, paddingBottom: 40, alignItems: "center" },
+  footerText: { color: "#64748B" },
+  footerHighlight: { fontWeight: "900", color: "#6366F1" },
   errorText: {
-    color: "#ef4444",
+    color: "#EF4444",
     fontSize: 13,
     fontWeight: "600",
-    marginTop: -10,
-    marginBottom: 15,
     textAlign: "center",
+    marginBottom: 10,
   },
   skipBtn: { marginTop: 20, alignSelf: "center", padding: 10 },
   skipText: {
-    color: "#94a3b8",
+    color: "#94A3B8",
     fontWeight: "700",
     textDecorationLine: "underline",
   },
