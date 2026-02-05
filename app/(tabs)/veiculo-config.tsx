@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react"; // Adicionado useEffect e useState
 import {
   StyleSheet,
   View,
@@ -7,10 +7,12 @@ import {
   ScrollView,
   Platform,
   SafeAreaView,
+  ActivityIndicator, // Adicionado
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { MotiView } from "moti";
-import { useRouter } from "expo-router"; // Importado
+import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Adicionado
 import { COLORS } from "../../constants/Colors";
 
 interface MetricCardProps {
@@ -29,15 +31,44 @@ interface CheckItemProps {
 }
 
 export default function VeiculoScreen() {
-  const router = useRouter(); // Inicializado
+  const router = useRouter();
+  const [isReady, setIsReady] = useState(false); // Controle de login
 
   const primaryColor = COLORS?.primary ?? "#0f172a";
   const accentColor = "#FFD700";
 
+  // --- VERIFICAÇÃO DE LOGIN ---
+  useEffect(() => {
+    const checkAuth = async () => {
+      const logged = await AsyncStorage.getItem("loggedIn");
+      if (logged !== "true") {
+        router.replace("/login");
+      } else {
+        setIsReady(true);
+      }
+    };
+    checkAuth();
+  }, []);
+
   const handleGoToSettings = () => {
-    // Rota ativada com replace
-    router.replace("/(tabs)/home");
+    router.replace("/(tabs)/");
   };
+
+  // Enquanto checa o login, mostra um loading para manter a fluidez
+  if (!isReady) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#FFF",
+        }}
+      >
+        <ActivityIndicator size="small" color={primaryColor} />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -112,7 +143,6 @@ export default function VeiculoScreen() {
 
         <Text style={styles.sectionTitle}>Checklist de Eficiência</Text>
 
-        {/* Se quiser que o checklist também navegue, basta adicionar onPress aqui */}
         <CheckItem
           icon="speedometer"
           label="Calibragem de Pneus"
@@ -122,7 +152,6 @@ export default function VeiculoScreen() {
         <CheckItem icon="oil" label="Troca de Óleo" status="Em dia" />
         <CheckItem icon="filter-outline" label="Filtro de Ar" status="Em dia" />
 
-        {/* BOTÃO ATIVADO COM REPLACE */}
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={handleGoToSettings}
@@ -136,6 +165,7 @@ export default function VeiculoScreen() {
   );
 }
 
+// Componentes internos (MetricCard e CheckItem) permanecem iguais
 const MetricCard = ({
   icon,
   label,

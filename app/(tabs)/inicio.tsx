@@ -5,17 +5,16 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
-  Platform,
   TouchableOpacity,
+  StatusBar,
 } from "react-native";
-// Se o erro persistir no VS Code após instalar, tente reiniciar o TS Server
-// (Ctrl+Shift+P > TypeScript: Restart TS Server)
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { MotiView } from "moti";
+import { MotiView, AnimatePresence } from "moti";
 
 const { width } = Dimensions.get("window");
 
+// Tipagem simplificada para evitar conflitos no render
 type Posto = {
   id: string;
   nome: string;
@@ -26,70 +25,18 @@ type Posto = {
 };
 
 const POSTOS_FORTALEZA: Posto[] = [
-  {
-    id: "1",
-    nome: "Ipiranga Chesf",
-    preco: "5.75",
-    bairro: "Passaré",
-    status: "Melhor Preço",
-    icone: "gas-station",
-  },
-  {
-    id: "2",
-    nome: "Shell Dragão",
-    preco: "5.92",
-    bairro: "Centro",
-    status: "Conveniência",
-    icone: "gas-station-outline",
-  },
-  {
-    id: "3",
-    nome: "Posto SP Aguanambi",
-    preco: "5.88",
-    bairro: "Fátima",
-    status: "Médio",
-    icone: "gas-station",
-  },
-  {
-    id: "4",
-    nome: "Petrobras Aldeota",
-    preco: "6.05",
-    bairro: "Aldeota",
-    status: "Premium",
-    icone: "gas-station",
-  },
-  {
-    id: "5",
-    nome: "Posto Cidade",
-    preco: "5.69",
-    bairro: "Maraponga",
-    status: "Melhor Preço",
-    icone: "gas-station",
-  },
-  {
-    id: "6",
-    nome: "Shell W. Soares",
-    preco: "5.99",
-    bairro: "Edson Queiroz",
-    status: "Médio",
-    icone: "gas-station",
-  },
-  {
-    id: "7",
-    nome: "Ipiranga Bezerra",
-    preco: "5.85",
-    bairro: "Parquelândia",
-    status: "Promoção",
-    icone: "gas-station",
-  },
+  { id: "1", nome: "Ipiranga Chesf", preco: "5.75", bairro: "Passaré", status: "Melhor Preço", icone: "gas-station" },
+  { id: "2", nome: "Shell Dragão", preco: "5.92", bairro: "Centro", status: "Conveniência", icone: "gas-station-outline" },
+  { id: "3", nome: "Posto SP Aguanambi", preco: "5.88", bairro: "Fátima", status: "Médio", icone: "gas-station" },
+  { id: "4", nome: "Petrobras Aldeota", preco: "6.05", bairro: "Aldeota", status: "Premium", icone: "gas-station" },
+  { id: "5", nome: "Posto Cidade", preco: "5.69", bairro: "Maraponga", status: "Melhor Preço", icone: "gas-station" },
 ];
 
 export default function Inicio() {
   const [text, setText] = useState("");
   const [index, setIndex] = useState(0);
   const [deleting, setDeleting] = useState(false);
-
-  const activeColor = "#3b82f6";
+  const [showMapInfo, setShowMapInfo] = useState(false);
 
   const phrases = [
     "Analisando 42 postos em Fortaleza...",
@@ -100,173 +47,150 @@ export default function Inicio() {
   ];
 
   useEffect(() => {
-    // Solução para o erro 2503: Usar 'ReturnType<typeof setTimeout>'
-    // Isso funciona tanto em Node quanto no Browser/React Native
     let timer: ReturnType<typeof setTimeout>;
-
     const full = phrases[index];
-    const speed = deleting ? 30 : 60;
+    const speed = deleting ? 20 : 50;
 
     timer = setTimeout(() => {
       if (!deleting && text === full) {
-        setTimeout(() => setDeleting(true), 3000);
+        setTimeout(() => setDeleting(true), 2500);
       } else if (deleting && text === "") {
         setDeleting(false);
         setIndex((p) => (p + 1) % phrases.length);
       } else {
-        setText(
-          deleting
-            ? full.slice(0, text.length - 1)
-            : full.slice(0, text.length + 1),
-        );
+        setText(deleting ? full.slice(0, text.length - 1) : full.slice(0, text.length + 1));
       }
     }, speed);
-
     return () => clearTimeout(timer);
   }, [text, deleting, index]);
 
   return (
-    <ScrollView
-      style={styles.main}
+    <ScrollView 
+      style={styles.main} 
       contentContainerStyle={styles.scrollContainer}
       showsVerticalScrollIndicator={false}
     >
+      <StatusBar barStyle="dark-content" />
+
       {/* HEADER */}
-      <MotiView
-        from={{ opacity: 0, translateY: -10 }}
-        animate={{ opacity: 1, translateY: 0 }}
+      <MotiView 
+        from={{ opacity: 0, translateY: -20 }} 
+        animate={{ opacity: 1, translateY: 0 }} 
         style={styles.header}
       >
         <View>
+          <Text style={styles.dateText}>QUINTA, 05 DE FEVEREIRO</Text>
           <Text style={styles.greeting}>Olá, Dalvan</Text>
-          <Text style={styles.subGreeting}>
-            Sua economia está 12% maior este mês.
-          </Text>
         </View>
-        <TouchableOpacity style={styles.profileBtn}>
-          <LinearGradient
-            colors={["#3b82f6", "#8b5cf6"]}
-            style={styles.avatarGradient}
-          >
-            <Text style={styles.avatarText}>LN</Text>
-          </LinearGradient>
+        <TouchableOpacity style={styles.notificationBtn}>
+          <Ionicons name={"notifications-outline" as any} size={24} color="#0f172a" />
+          <View style={styles.badge} />
         </TouchableOpacity>
       </MotiView>
 
-      <View style={styles.chipRow}>
-        <View style={styles.activeChip}>
-          <View style={styles.pulseDot} />
-          <Text style={styles.activeChipText}>Monitorando: Fortaleza</Text>
-        </View>
-      </View>
-
-      {/* TERMINAL IA */}
-      <MotiView
-        from={{ opacity: 0, translateY: 20 }}
-        animate={{ opacity: 1, translateY: 0 }}
+      {/* AI CARD */}
+      <MotiView 
+        from={{ opacity: 0, scale: 0.9 }} 
+        animate={{ opacity: 1, scale: 1 }}
         style={styles.aiCard}
       >
-        <View style={styles.aiHeader}>
-          <MaterialCommunityIcons name="auto-fix" size={20} color="#fff" />
-          <Text style={styles.aiTitle}>Insights da GasoLink AI</Text>
-        </View>
-        <View style={styles.aiContent}>
+        <LinearGradient colors={["#1e293b", "#0f172a"]} style={styles.aiGradient}>
+          <View style={styles.aiHeader}>
+            <MaterialCommunityIcons name={"sparkles" as any} size={18} color="#60a5fa" />
+            <Text style={styles.aiTitle}>GASOLINK INTELLIGENCE</Text>
+          </View>
           <Text style={styles.aiText}>
-            {"> "}
-            {text}
-            <MotiView
-              from={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ loop: true, duration: 500, type: "timing" }}
-              style={styles.cursor}
-            />
+            {text}<Text style={styles.cursor}>|</Text>
           </Text>
-        </View>
+        </LinearGradient>
       </MotiView>
 
-      <View style={styles.mapContainer}>
-        <View style={styles.mapBlur}>
-          <MaterialCommunityIcons
-            name="map-marker-radius"
-            size={40}
-            color="#cbd5e1"
+      {/* MAPA ESTRATÉGICO */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Cobertura Local</Text>
+        <View style={styles.liveTag}>
+          <MotiView 
+            from={{ opacity: 0.3 }} 
+            animate={{ opacity: 1 }} 
+            transition={{ loop: true, duration: 1000, type: 'timing' }} 
+            style={styles.liveDot} 
           />
-          <Text style={styles.mapTitle}>Visualização Geográfica</Text>
-          <Text style={styles.mapSub}>
-            Módulo em processamento para versão Web
-          </Text>
-          <TouchableOpacity style={styles.mapBtn}>
-            <Text style={styles.mapBtnText}>Ativar GPS</Text>
-          </TouchableOpacity>
+          <Text style={styles.liveText}>LIVE</Text>
         </View>
       </View>
 
+      <TouchableOpacity 
+        activeOpacity={0.9} 
+        onPress={() => setShowMapInfo(!showMapInfo)}
+        style={styles.mapCard}
+      >
+        <LinearGradient colors={["#f8fafc", "#f1f5f9"]} style={styles.mapContent}>
+          <MaterialCommunityIcons name={"map-marker-path" as any} size={40} color="#3b82f6" style={styles.mapIcon} />
+          
+          <AnimatePresence exitBeforeEnter>
+            {!showMapInfo ? (
+              <MotiView 
+                key="state1" 
+                from={{ opacity: 0, scale: 0.9 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                exit={{ opacity: 0, scale: 0.9 }}
+              >
+                <Text style={styles.mapStatusTitle}>Visão Geográfica</Text>
+                <Text style={styles.mapStatusSub}>Toque para detalhes do Roadmap 2026</Text>
+              </MotiView>
+            ) : (
+              <MotiView 
+                key="state2" 
+                from={{ opacity: 0, translateY: 10 }} 
+                animate={{ opacity: 1, translateY: 0 }} 
+                exit={{ opacity: 0 }}
+              >
+                <Text style={styles.mapStrategicText}>
+                  Módulo de satélite em implantação estratégica. 
+                  <Text style={{ fontWeight: '800', color: '#3b82f6' }}> Previsão: Q2 2026.</Text>
+                </Text>
+              </MotiView>
+            )}
+          </AnimatePresence>
+
+          <View style={styles.mapTag}>
+            <Text style={styles.mapTagText}>ROADMAP</Text>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+
+      {/* RANKING */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Ranking de Preços</Text>
-        <TouchableOpacity style={styles.filterBtn}>
-          <Ionicons name="options-outline" size={18} color="#64748b" />
-          <Text style={styles.filterText}>Filtros</Text>
-        </TouchableOpacity>
       </View>
 
       {POSTOS_FORTALEZA.map((p, i) => (
         <MotiView
           key={p.id}
-          from={{ opacity: 0, translateY: 30 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ delay: 200 + i * 100, type: "spring", damping: 15 }}
-          style={styles.cardPosto}
+          from={{ opacity: 0, translateX: -20 }} 
+          animate={{ opacity: 1, translateX: 0 }} 
+          transition={{ delay: i * 100, type: 'timing' }}
+          style={styles.postoCard}
         >
-          <View style={styles.cardLeft}>
-            <View
-              style={[
-                styles.iconContainer,
-                {
-                  backgroundColor:
-                    p.status === "Melhor Preço" ? "#eff6ff" : "#f8fafc",
-                },
-              ]}
-            >
-              <MaterialCommunityIcons
-                name={p.icone as any}
-                size={22}
-                color={p.status === "Melhor Preço" ? "#3b82f6" : "#94a3b8"}
+          <View style={styles.postoInfo}>
+            <View style={[styles.postoIcon, { backgroundColor: p.status === "Melhor Preço" ? "#dcfce7" : "#f1f5f9" }]}>
+              <MaterialCommunityIcons 
+                name={p.icone as any} 
+                size={22} 
+                color={p.status === "Melhor Preço" ? "#16a34a" : "#64748b"} 
               />
             </View>
             <View>
-              <Text style={styles.nomePosto}>{p.nome}</Text>
-              <View style={styles.bairroRow}>
-                <Ionicons name="navigate-outline" size={10} color="#94a3b8" />
-                <Text style={styles.bairroText}>{p.bairro} • 1.2km</Text>
-              </View>
+              <Text style={styles.postoNome}>{p.nome}</Text>
+              <Text style={styles.postoBairro}>{p.bairro} • 1.2 km</Text>
             </View>
           </View>
 
-          <View style={styles.cardRight}>
-            <Text style={styles.labelPreco}>Gasolina Comum</Text>
-            <Text style={styles.precoText}>
-              <Text style={styles.cifrao}>R$</Text> {p.preco}
+          <View style={styles.postoPriceContainer}>
+            <Text style={styles.priceLabel}>GASOLINA</Text>
+            <Text style={styles.priceValue}>
+              <Text style={styles.currency}>R$</Text> {p.preco}
             </Text>
-            <View
-              style={[
-                styles.tagStatus,
-                {
-                  backgroundColor:
-                    p.status === "Melhor Preço" ? "#dcfce7" : "#f1f5f9",
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.tagText,
-                  {
-                    color: p.status === "Melhor Preço" ? "#16a34a" : "#64748b",
-                  },
-                ]}
-              >
-                {p.status}
-              </Text>
-            </View>
           </View>
         </MotiView>
       ))}
@@ -276,179 +200,80 @@ export default function Inicio() {
 
 const styles = StyleSheet.create({
   main: { flex: 1, backgroundColor: "#fff" },
-  scrollContainer: { padding: 20, paddingBottom: 120 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
-    marginBottom: 15,
+  scrollContainer: { padding: 20, paddingBottom: 100 },
+  header: { 
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    alignItems: "center", 
+    marginTop: 40,
+    marginBottom: 25 
   },
-  greeting: { fontSize: 22, fontWeight: "900", color: "#0f172a" },
-  subGreeting: { fontSize: 13, color: "#64748b", marginTop: 2 },
-  profileBtn: {
-    shadowColor: "#3b82f6",
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  avatarGradient: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
-    justifyContent: "center",
+  dateText: { fontSize: 10, fontWeight: "800", color: "#94a3b8", letterSpacing: 1 },
+  greeting: { fontSize: 26, fontWeight: "900", color: "#0f172a", marginTop: 2 },
+  notificationBtn: { 
+    width: 45, 
+    height: 45, 
+    borderRadius: 15, 
+    backgroundColor: "#f8fafc", 
+    justifyContent: "center", 
     alignItems: "center",
-  },
-  avatarText: { color: "#fff", fontWeight: "bold", fontSize: 14 },
-  chipRow: { marginBottom: 25 },
-  activeChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f1f5f9",
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 100,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: "#f1f5f9"
   },
-  pulseDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#10b981",
-    marginRight: 8,
+  badge: { 
+    position: 'absolute', 
+    top: 12, 
+    right: 12, 
+    width: 8, 
+    height: 8, 
+    borderRadius: 4, 
+    backgroundColor: "#ef4444",
+    borderWidth: 2,
+    borderColor: "#fff"
   },
-  activeChipText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#475569",
-    textTransform: "uppercase",
-  },
-  aiCard: {
-    backgroundColor: "#0f172a",
-    borderRadius: 24,
-    padding: 20,
-    marginBottom: 25,
-    overflow: "hidden",
-  },
-  aiHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
-  },
-  aiTitle: {
-    fontSize: 10,
-    color: "#94a3b8",
-    fontWeight: "800",
-    letterSpacing: 0.5,
-  },
-  aiContent: { minHeight: 45 },
-  aiText: {
-    color: "#fff",
-    fontSize: 15,
-    fontWeight: "500",
-    lineHeight: 22,
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-  },
-  cursor: {
-    width: 6,
-    height: 15,
-    backgroundColor: "#3b82f6",
-    marginLeft: 4,
-    alignSelf: "center",
-  },
-  mapContainer: {
-    height: 160,
-    backgroundColor: "#f8fafc",
-    borderRadius: 24,
-    marginBottom: 30,
-    borderWidth: 1,
-    borderColor: "#f1f5f9",
-    overflow: "hidden",
-  },
-  mapBlur: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  mapTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#1e293b",
-    marginTop: 10,
-  },
-  mapSub: { fontSize: 12, color: "#94a3b8", textAlign: "center", marginTop: 4 },
-  mapBtn: {
-    marginTop: 15,
-    backgroundColor: "#fff",
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 12,
-    elevation: 1,
-  },
-  mapBtnText: { fontSize: 12, fontWeight: "700", color: "#3b82f6" },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
+  aiCard: { marginBottom: 30, borderRadius: 24, overflow: "hidden" },
+  aiGradient: { padding: 20 },
+  aiHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 },
+  aiTitle: { color: "#60a5fa", fontSize: 10, fontWeight: "900", letterSpacing: 1 },
+  aiText: { color: "#fff", fontSize: 16, fontWeight: "600", lineHeight: 24, minHeight: 48 },
+  cursor: { color: "#3b82f6", fontWeight: "bold" },
+  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 15 },
   sectionTitle: { fontSize: 18, fontWeight: "900", color: "#0f172a" },
-  filterBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: "#f8fafc",
-    padding: 8,
-    borderRadius: 10,
+  liveTag: { flexDirection: "row", alignItems: "center", backgroundColor: "#fef2f2", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#ef4444", marginRight: 5 },
+  liveText: { fontSize: 9, fontWeight: "900", color: "#ef4444" },
+  mapCard: { 
+    borderRadius: 24, 
+    overflow: "hidden", 
+    borderWidth: 1, 
+    borderColor: "#e2e8f0", 
+    marginBottom: 30,
+    backgroundColor: "#f8fafc"
   },
-  filterText: { fontSize: 12, fontWeight: "600", color: "#64748b" },
-  cardPosto: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 16,
+  mapContent: { padding: 25, alignItems: "center" },
+  mapIcon: { marginBottom: 15 },
+  mapStatusTitle: { fontSize: 16, fontWeight: "800", color: "#1e293b", textAlign: "center" },
+  mapStatusSub: { fontSize: 12, color: "#94a3b8", marginTop: 5, textAlign: "center" },
+  mapStrategicText: { fontSize: 13, color: "#475569", textAlign: "center", lineHeight: 20, fontWeight: "500" },
+  mapTag: { position: "absolute", top: 15, right: 15, backgroundColor: "#3b82f6", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  mapTagText: { color: "#fff", fontSize: 9, fontWeight: "900" },
+  postoCard: { 
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    alignItems: "center", 
+    backgroundColor: "#fff", 
+    padding: 16, 
+    borderRadius: 20, 
     marginBottom: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     borderWidth: 1,
-    borderColor: "#f1f5f9",
-    elevation: 2,
+    borderColor: "#f1f5f9"
   },
-  cardLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  nomePosto: { fontSize: 15, fontWeight: "800", color: "#1e293b" },
-  bairroRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: 4,
-  },
-  bairroText: { fontSize: 11, color: "#94a3b8", fontWeight: "500" },
-  cardRight: { alignItems: "flex-end" },
-  labelPreco: {
-    fontSize: 9,
-    color: "#94a3b8",
-    fontWeight: "700",
-    textTransform: "uppercase",
-    marginBottom: 2,
-  },
-  precoText: { fontSize: 20, fontWeight: "900", color: "#0f172a" },
-  cifrao: { fontSize: 12, color: "#3b82f6" },
-  tagStatus: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginTop: 6,
-  },
-  tagText: { fontSize: 9, fontWeight: "800", textTransform: "uppercase" },
+  postoInfo: { flexDirection: "row", alignItems: "center", gap: 12 },
+  postoIcon: { width: 48, height: 48, borderRadius: 16, justifyContent: "center", alignItems: "center" },
+  postoNome: { fontSize: 15, fontWeight: "800", color: "#1e293b" },
+  postoBairro: { fontSize: 12, color: "#94a3b8", marginTop: 2 },
+  postoPriceContainer: { alignItems: "flex-end" },
+  priceLabel: { fontSize: 9, fontWeight: "800", color: "#94a3b8", marginBottom: 2 },
+  priceValue: { fontSize: 20, fontWeight: "900", color: "#0f172a" },
+  currency: { color: "#3b82f6", fontSize: 12 },
 });

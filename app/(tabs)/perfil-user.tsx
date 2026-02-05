@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -10,12 +10,14 @@ import {
   Modal,
   Image,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { MotiView } from "moti";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("window");
 
@@ -34,6 +36,27 @@ export default function PerfilScreen() {
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
   const [image, setImage] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  // --- PROTEÇÃO DE ROTA ---
+  useEffect(() => {
+    const checkAuth = async () => {
+      const logged = await AsyncStorage.getItem("loggedIn");
+      if (logged !== "true") {
+        router.replace("/login");
+      } else {
+        setIsReady(true);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  // --- FUNÇÃO DE LOGOUT REAL ---
+  const handleLogout = async () => {
+    setModalVisible(false);
+    await AsyncStorage.removeItem("loggedIn"); // Limpa o estado de login
+    router.replace("/login"); // Volta para a tela de entrada
+  };
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -44,6 +67,15 @@ export default function PerfilScreen() {
     });
     if (!result.canceled) setImage(result.assets[0].uri);
   };
+
+  // Enquanto verifica o login
+  if (!isReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: COLORS.background }}>
+        <ActivityIndicator size="small" color={COLORS.primary} />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -160,7 +192,7 @@ export default function PerfilScreen() {
           />
         </View>
 
-        {/* MENU - LINKS RESTAURADOS */}
+        {/* MENU */}
         <View style={styles.menuBox}>
           <Text style={styles.menuHeader}>CONFIGURAÇÕES</Text>
           <MenuRow
@@ -225,7 +257,7 @@ export default function PerfilScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.btnExit}
-                onPress={() => router.replace("/")}
+                onPress={handleLogout} // Chama a função que limpa o login
               >
                 <Text style={styles.btnExitText}>Sair</Text>
               </TouchableOpacity>
@@ -237,6 +269,7 @@ export default function PerfilScreen() {
   );
 }
 
+// Componentes auxiliares (StatCard e MenuRow) e estilos permanecem iguais...
 const StatCard = ({ icon, label, value, suffix, color }: any) => (
   <View style={styles.statCard}>
     <View style={[styles.statIconBox, { backgroundColor: color + "10" }]}>

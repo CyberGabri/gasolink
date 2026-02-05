@@ -69,7 +69,7 @@ export default function DadosPessoaisScreen() {
         {/* HEADER - VOLTA PARA O PERFIL */}
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => router.replace("/(tabs)/home")} // <--- VOLTA AQUI
+            onPress={() => router.replace("/(tabs)/")} // <--- VOLTA AQUI
             style={styles.backBtn}
           >
             <Ionicons name="chevron-back" size={24} color={COLORS.secondary} />
@@ -143,7 +143,7 @@ export default function DadosPessoaisScreen() {
             style={styles.saveBtn}
             onPress={() => {
               // Lógica de salvar aqui...
-              router.replace("/(tabs)/home"); // <--- VOLTA APÓS SALVAR
+              router.replace("/(tabs)/"); // <--- VOLTA APÓS SALVAR
             }}
           >
             <Text style={styles.saveBtnText}>SALVAR E VOLTAR</Text>

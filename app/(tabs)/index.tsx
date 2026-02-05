@@ -1,272 +1,305 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   StyleSheet,
   View,
   Text,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+  TouchableOpacity,
   StatusBar,
-  Pressable,
   Modal,
-  Animated,
-  ImageBackground,
+  Dimensions,
+  ActivityIndicator,
 } from "react-native";
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MotiView, AnimatePresence } from "moti";
+import Animated, {
+  useAnimatedStyle,
+  withSpring,
+  useSharedValue,
+} from "react-native-reanimated";
+import { Audio } from "expo-av";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { GasoInput } from "../../components/GasoInput";
-import { GasoButton } from "../../components/GasoButton";
-import { COLORS } from "../../constants/Colors";
+// Importação das suas telas
+import Inicio from "./inicio";
+import VeiculoConfig from "./veiculo-config";
+import Financeiro from "./meu-plano";
+import PerfilUser from "./perfil-user";
 
-const { height, width } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
-export default function LoginScreen() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalMsg, setModalMsg] = useState("");
-  const [currentMessage, setCurrentMessage] = useState(0);
+type TabType = "inicio" | "veiculo-config" | "financeiro" | "perfil-user";
+const TABS: TabType[] = ["inicio", "veiculo-config", "financeiro", "perfil-user"];
+const TAB_WIDTH = width / TABS.length;
+const TAB_BAR_HEIGHT = 70;
 
-  const [isOpeningActive, setIsOpeningActive] = useState(true);
-
-  const openingViewOpacity = useRef(new Animated.Value(1)).current;
-  const logoY = useRef(new Animated.Value(30)).current;
-  const logoOpacity = useRef(new Animated.Value(0)).current;
-  const contentFade = useRef(new Animated.Value(0)).current;
-  const phraseFade = useRef(new Animated.Value(0)).current;
-
-  const messages = [
-    "Bem-vindo ao Gasolink!",
-    "Economize tempo e dinheiro.",
-    "Controle seu veículo facilmente.",
-  ];
+export default function HomeScreen() {
+  const [isReady, setIsReady] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    Animated.sequence([
-      Animated.delay(400),
-
-      Animated.parallel([
-        Animated.timing(logoOpacity, {
-          toValue: 1,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(logoY, {
-          toValue: 0,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.delay(1200),
-
-      Animated.parallel([
-        Animated.timing(openingViewOpacity, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(contentFade, {
-          toValue: 1,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
-      ]),
-    ]).start(() => {
-      setIsOpeningActive(false);
-      startPhraseLoop();
-    });
+    const checkLoginStatus = async () => {
+      try {
+        const loggedIn = await AsyncStorage.getItem("loggedIn");
+        setIsLoggedIn(loggedIn === "true");
+      } catch (e) {
+        setIsLoggedIn(false);
+      } finally {
+        setIsReady(true);
+      }
+    };
+    checkLoginStatus();
   }, []);
 
-  const startPhraseLoop = () => {
-    Animated.timing(phraseFade, {
-      toValue: 1,
-      duration: 800,
-      useNativeDriver: true,
-    }).start();
-    setInterval(() => {
-      Animated.timing(phraseFade, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }).start(() => {
-        setCurrentMessage((prev) => (prev + 1) % messages.length);
-        Animated.timing(phraseFade, {
-          toValue: 1,
-          duration: 700,
-          useNativeDriver: true,
-        }).start();
-      });
-    }, 4000);
-  };
+  if (!isReady) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.main}>
-      <StatusBar
-        barStyle="light-content"
-        translucent
-        backgroundColor="transparent"
-      />
+    <SafeAreaProvider>
+      <HomeContent isLoggedIn={isLoggedIn} />
+    </SafeAreaProvider>
+  );
+}
 
-      {isOpeningActive && (
-        <Animated.View
-          style={[styles.openingOverlay, { opacity: openingViewOpacity }]}
+function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
+  const router = useRouter();
+  const [currentTab, setCurrentTab] = useState<TabType>("inicio");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [visitedTabs, setVisitedTabs] = useState<Set<TabType>>(new Set(["inicio"]));
+
+  const insets = useSafeAreaInsets();
+  const activeColor = "#3b82f6";
+  const translateX = useSharedValue(0);
+
+  const playClick = useCallback(async () => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        require("../../assets/sounds/click.mp3"),
+        { volume: 0.5 },
+      );
+      await sound.playAsync();
+      sound.setOnPlaybackStatusUpdate((s: any) => s.didJustFinish && sound.unloadAsync());
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    const index = TABS.indexOf(currentTab);
+    translateX.value = withSpring(index * TAB_WIDTH, {
+      damping: 20,
+      stiffness: 150,
+    });
+  }, [currentTab]);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  const handleTabPress = (tab: TabType) => {
+    playClick();
+    if (!isLoggedIn) {
+      const newVisited = new Set(visitedTabs).add(tab);
+      setVisitedTabs(newVisited);
+      if (newVisited.size >= TABS.length) {
+        setModalVisible(true);
+      }
+    }
+    setCurrentTab(tab);
+  };
+
+  const renderScreen = useCallback(() => {
+    switch (currentTab) {
+      case "inicio": return <Inicio />;
+      case "veiculo-config": return <VeiculoConfig />;
+      case "financeiro": return <Financeiro />;
+      case "perfil-user": return <PerfilUser />;
+      default: return <Inicio />;
+    }
+  }, [currentTab]);
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top }]}>
+        <View>
+          <Text style={styles.brand}>
+            GASOLINK <Text style={{ color: activeColor }}>AI</Text>
+          </Text>
+          <View style={styles.carBadge}>
+            {/* CORREÇÃO AQUI: Troquei sparkles (inválido) por shield-check ou auto-fix */}
+            <MaterialCommunityIcons
+              name={isLoggedIn ? "shield-check" : "auto-fix"} 
+              size={14}
+              color={isLoggedIn ? "#10b981" : "#94a3b8"}
+            />
+            <Text style={[styles.carText, { color: isLoggedIn ? "#10b981" : "#94a3b8" }]}>
+              {isLoggedIn ? "CONEXÃO ATIVA" : "MODO VISITANTE"}
+            </Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={styles.proBadge}
+          onPress={() => !isLoggedIn && setModalVisible(true)}
         >
-          <Animated.Text
-            style={[
-              styles.logoOpening,
-              {
-                opacity: logoOpacity,
-                transform: [{ translateY: logoY }],
-              },
-            ]}
+          <Text style={styles.proText}>{isLoggedIn ? "PRO+" : "Plano"}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.content}>
+        <AnimatePresence exitBeforeEnter>
+          <MotiView
+            key={currentTab}
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ type: "timing", duration: 150 }}
+            style={{ flex: 1 }}
           >
-            GasoLink
-          </Animated.Text>
-        </Animated.View>
-      )}
+            {renderScreen()}
+          </MotiView>
+        </AnimatePresence>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false}>
-          <Animated.View style={{ flex: 1, opacity: contentFade }}>
-            <ImageBackground
-              source={{
-                uri: "https://images.unsplash.com/photo-1545147458-7182281a942a?q=80&w=1200",
-              }}
-              style={styles.header}
-            >
-              <View style={styles.overlay}>
-                <Text style={styles.logoText}>GasoLink</Text>
+        {/* Detector de toque sem travar scroll */}
+        {!isLoggedIn && (
+          <View 
+            style={StyleSheet.absoluteFill}
+            pointerEvents="box-none"
+            onStartShouldSetResponder={() => true}
+            onResponderRelease={() => setModalVisible(true)}
+          />
+        )}
+      </View>
 
-                <Animated.View
-                  style={[styles.animationContainer, { opacity: phraseFade }]}
-                >
-                  <Text style={styles.animatedText}>
-                    {messages[currentMessage]}
-                  </Text>
-                </Animated.View>
-              </View>
-            </ImageBackground>
+      {/* Tab Bar */}
+      <View style={[styles.tabBarContainer, { height: TAB_BAR_HEIGHT + insets.bottom, paddingBottom: insets.bottom }]}>
+        <View style={styles.tabBar}>
+          <Animated.View style={[styles.activeIndicator, indicatorStyle, { backgroundColor: activeColor + "08" }]} />
+          <Animated.View style={[styles.topLine, indicatorStyle, { backgroundColor: activeColor }]} />
 
-            {/* CARD DE LOGIN */}
-            <View style={styles.formCard}>
-              <Text style={styles.title}>Olá novamente!</Text>
-              <Text style={styles.subtitle}>
-                Acesse sua conta para continuar.
-              </Text>
-
-              <GasoInput
-                label="E-mail"
-                placeholder="seu@email.com"
-                value={email}
-                onChangeText={setEmail}
-              />
-              <GasoInput
-                label="Senha"
-                placeholder="Sua senha"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
-
-              <Pressable
-                style={styles.forgot}
-                onPress={() => {
-                  router.push("/recuperar-senha");
-                }}
+          {TABS.map((tab) => {
+            const isActive = currentTab === tab;
+            return (
+              <TouchableOpacity
+                key={tab}
+                style={styles.tab}
+                onPress={() => handleTabPress(tab)}
               >
-                <Text style={styles.forgotText}>Esqueceu a senha?</Text>
-              </Pressable>
-
-              <GasoButton
-                title="Entrar na Conta"
-                onPress={() => router.replace("/home")}
-              />
-
-              <Pressable
-                style={styles.footerBtn}
-                onPress={() => router.push("/registro")}
-              >
-                <Text style={styles.footerText}>
-                  Não tem conta?{" "}
-                  <Text style={styles.footerHighlight}>Cadastre-se</Text>
+                <Ionicons
+                  name={getIcon(tab, isActive)}
+                  size={24}
+                  color={isActive ? activeColor : "#94a3b8"}
+                />
+                <Text style={[styles.tabText, { color: isActive ? activeColor : "#94a3b8", fontWeight: isActive ? "800" : "500" }]}>
+                  {getLabel(tab)}
                 </Text>
-              </Pressable>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* Modal Bloqueio */}
+      <Modal transparent visible={modalVisible} animationType="fade">
+        <View style={styles.overlay}>
+          <MotiView
+            from={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={styles.blackModal}
+          >
+            <View style={styles.lockContainer}>
+              <MotiView
+                from={{ translateY: -12 }}
+                animate={{ translateY: 0 }}
+                transition={{ type: "spring", damping: 12, delay: 200 }}
+                style={styles.lockShackle}
+              />
+              <View style={styles.lockBody}>
+                <MaterialCommunityIcons name="lock" size={32} color="#FFF" />
+              </View>
             </View>
-          </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+            <Text style={styles.modalBrand}>GASOLINK</Text>
+            <Text style={styles.modalTitle}>Acesso Restrito</Text>
+
+            <Text style={styles.modalDescription}>
+              Faça login para salvar seus veículos e acessar recursos exclusivos de inteligência.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.loginBtn}
+              onPress={() => {
+                setModalVisible(false);
+                router.push("/login");
+              }}
+            >
+              <Text style={styles.loginBtnText}>FAZER LOGIN</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                setModalVisible(false);
+                setCurrentTab("inicio");
+                setVisitedTabs(new Set(["inicio"]));
+              }}
+              style={styles.laterBtn}
+            >
+              <Text style={styles.laterText}>Talvez mais tarde</Text>
+            </TouchableOpacity>
+          </MotiView>
+        </View>
+      </Modal>
     </View>
   );
 }
 
+// Funções auxiliares
+function getIcon(tab: TabType, active: boolean): any {
+  const icons: Record<TabType, string> = { inicio: "flash", "veiculo-config": "car-sport", financeiro: "receipt", "perfil-user": "person" };
+  return active ? icons[tab] : `${icons[tab]}-outline`;
+}
+
+function getLabel(tab: TabType): string {
+  const labels: Record<TabType, string> = { inicio: "Home", "veiculo-config": "Veículo", financeiro: "Plano", "perfil-user": "Perfil" };
+  return labels[tab];
+}
+
 const styles = StyleSheet.create({
-  main: { flex: 1, backgroundColor: "#000" },
-  openingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#000",
-    zIndex: 99,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logoOpening: {
-    color: "#FFF",
-    fontSize: 55,
-    fontWeight: "900",
-    letterSpacing: -2,
-  },
-  header: {
-    height: height * 0.45,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.65)", // Escurece um pouco a foto para o logo brilhar
-    justifyContent: "center",
-    alignItems: "center",
-    borderBottomLeftRadius: 50,
-    borderBottomRightRadius: 50,
-  },
-  logoText: {
-    color: "#FFF",
-    fontSize: 52,
-    fontWeight: "900",
-    letterSpacing: -2,
-    textShadowColor: "rgba(0,0,0,0.5)",
-    textShadowOffset: { width: 0, height: 4 },
-    textShadowRadius: 10,
-  },
-  animationContainer: { height: 30, marginTop: 10 },
-  animatedText: {
-    color: "#cbd5e1",
-    fontSize: 16,
-    textAlign: "center",
-    fontWeight: "600",
-  },
-  formCard: {
-    flex: 1,
-    paddingHorizontal: 30,
-    paddingTop: 40,
-    backgroundColor: "#FFF",
-    marginTop: -60,
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
-    elevation: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-  },
-  title: { fontSize: 28, fontWeight: "900", color: "#0f172a" },
-  subtitle: { fontSize: 15, color: "#64748b", marginBottom: 25 },
-  forgot: { alignSelf: "flex-end", marginBottom: 20 },
-  forgotText: { color: COLORS.primary || "#2563eb", fontWeight: "700" },
-  footerBtn: { marginTop: 25, alignItems: "center" },
-  footerText: { color: "#64748b" },
-  footerHighlight: { fontWeight: "900", color: COLORS.primary || "#2563eb" },
+  container: { flex: 1, backgroundColor: "#FFF" },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  header: { backgroundColor: "#FFF", paddingHorizontal: 20, paddingBottom: 15, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottomWidth: 1, borderColor: "#F1F5F9" },
+  brand: { fontSize: 20, fontWeight: "900", color: "#0f172a" },
+  carBadge: { flexDirection: "row", alignItems: "center", marginTop: 2 },
+  carText: { marginLeft: 4, fontSize: 10, fontWeight: "800" },
+  proBadge: { backgroundColor: "#0f172a", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  proText: { color: "#FFD700", fontWeight: "900", fontSize: 11 },
+  content: { flex: 1 },
+  tabBarContainer: { position: "absolute", bottom: 0, width: "100%", backgroundColor: "#FFF", borderTopWidth: 1, borderColor: "#F1F5F9" },
+  tabBar: { height: 70, flexDirection: "row", alignItems: "center" },
+  tab: { flex: 1, alignItems: "center", justifyContent: "center" },
+  tabText: { fontSize: 10, marginTop: 4 },
+  activeIndicator: { position: "absolute", width: width / 4, height: "100%" },
+  topLine: { position: "absolute", top: -1, width: width / 4, height: 3 },
+  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.95)", justifyContent: "center", alignItems: "center" },
+  blackModal: { width: "85%", backgroundColor: "#050505", borderRadius: 35, padding: 30, alignItems: "center", borderWidth: 1, borderColor: "#1a1a1a" },
+  lockContainer: { height: 90, justifyContent: "center", alignItems: "center", marginBottom: 15 },
+  lockShackle: { width: 38, height: 40, borderWidth: 5, borderColor: "#FFF", borderTopLeftRadius: 19, borderTopRightRadius: 19, borderBottomWidth: 0, marginBottom: -15, opacity: 0.9 },
+  lockBody: { width: 65, height: 55, backgroundColor: "#111", borderRadius: 12, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: "#333" },
+  modalBrand: { color: "#FFF", fontWeight: "900", fontSize: 14, letterSpacing: 4, marginBottom: 10 },
+  modalTitle: { fontSize: 24, fontWeight: "900", color: "#FFF", marginBottom: 12 },
+  modalDescription: { color: "#888", textAlign: "center", fontSize: 14, lineHeight: 22, marginBottom: 30 },
+  loginBtn: { backgroundColor: "#000", width: "100%", paddingVertical: 18, borderRadius: 18, alignItems: "center", borderWidth: 1, borderColor: "#333" },
+  loginBtnText: { color: "#FFF", fontWeight: "900", fontSize: 14, letterSpacing: 1 },
+  laterBtn: { marginTop: 25 },
+  laterText: { color: "#444", fontWeight: "700", fontSize: 12 },
 });

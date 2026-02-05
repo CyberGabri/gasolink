@@ -36,7 +36,7 @@ export default function SegurancaScreen() {
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity 
-          onPress={() => router.replace("/(tabs)/home")} 
+          onPress={() => router.replace("/(tabs)/")} 
           style={styles.backBtn}
         >
           <Ionicons name="chevron-back" size={24} color={COLORS.secondary} />

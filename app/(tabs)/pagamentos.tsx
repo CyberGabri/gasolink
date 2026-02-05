@@ -40,7 +40,7 @@ export default function PagamentosScreen() {
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.replace("/(tabs)/home")}
+          onPress={() => router.replace("/(tabs)/")}
           style={styles.backBtn}
         >
           <Ionicons name="chevron-back" size={24} color={COLORS.secondary} />
@@ -151,7 +151,7 @@ export default function PagamentosScreen() {
 
         <TouchableOpacity
           style={styles.confirmBtn}
-          onPress={() => router.replace("/(tabs)/home")}
+          onPress={() => router.replace("/(tabs)/")}
         >
           <Text style={styles.confirmBtnText}>SALVAR PREFERÊNCIAS</Text>
         </TouchableOpacity>

@@ -36,7 +36,7 @@ export default function PreferenciasScreen() {
 
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.replace("/(tabs)/home")}
+          onPress={() => router.replace("/(tabs)/")}
           style={styles.backBtn}
         >
           <Ionicons name="chevron-back" size={24} color={COLORS.secondary} />
@@ -139,7 +139,7 @@ export default function PreferenciasScreen() {
 
         <TouchableOpacity
           style={styles.saveBtn}
-          onPress={() => router.replace("/(tabs)/home")}
+          onPress={() => router.replace("/(tabs)/")}
         >
           <MotiView
             animate={{ scale: [1, 1.02, 1] }}

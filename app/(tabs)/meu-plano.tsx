@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -7,13 +7,14 @@ import {
   Platform,
   SafeAreaView,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
-// Importação do router para navegação
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Constantes de Planos com cores seguras
+// Constantes de Planos
 const PLANOS = [
   { id: "basico", nome: "Básico", preco: "Grátis", cor: "#94a3b8", desc: "Mapa básico e preços" },
   { id: "medio", nome: "Médio", preco: "R$ 9,90", cor: "#3b82f6", desc: "Alertas em tempo real" },
@@ -24,12 +25,34 @@ const PLANOS = [
 
 export default function PlanosScreen() {
   const [selecionado, setSelecionado] = useState("premium");
-  const router = useRouter(); // Inicializando o router
+  const [isReady, setIsReady] = useState(false);
+  const router = useRouter();
+
+  // --- PROTEÇÃO DE ROTA ---
+  useEffect(() => {
+    const checkAuth = async () => {
+      const logged = await AsyncStorage.getItem("loggedIn");
+      if (logged !== "true") {
+        router.replace("/login");
+      } else {
+        setIsReady(true);
+      }
+    };
+    checkAuth();
+  }, []);
 
   const handleAtivarPlano = () => {
-    // Redireciona para a home (ajuste o caminho conforme sua estrutura de pastas)
-    router.replace("/(tabs)/home");
+    // Redireciona para a home após selecionar o plano
+    router.replace("/(tabs)/");
   };
+
+  if (!isReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF' }}>
+        <ActivityIndicator size="small" color="#3b82f6" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -95,7 +118,7 @@ export default function PlanosScreen() {
                       <TouchableOpacity
                         activeOpacity={0.7}
                         style={[styles.subscribeBtn, { backgroundColor: plano.cor }]}
-                        onPress={handleAtivarPlano} // Aplicando o router.replace aqui
+                        onPress={handleAtivarPlano}
                       >
                         <Text style={styles.subscribeBtnText}>ATIVAR AGORA</Text>
                       </TouchableOpacity>
@@ -130,7 +153,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   subTitle: { fontSize: 14, color: "#64748b", fontWeight: "600" },
-
   planCard: {
     backgroundColor: "#FFF",
     borderRadius: 22,
@@ -157,7 +179,6 @@ const styles = StyleSheet.create({
   planDesc: { fontSize: 12, color: "#94a3b8", marginTop: 2, fontWeight: "600" },
   priceContainer: { alignItems: "flex-end", marginLeft: 10 },
   planPrice: { fontSize: 16, fontWeight: "900", color: "#1e293b" },
-
   expandedArea: {
     marginTop: 20,
     borderTopWidth: 1,
