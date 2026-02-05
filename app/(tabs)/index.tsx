@@ -30,15 +30,13 @@ export default function LoginScreen() {
   const [modalMsg, setModalMsg] = useState("");
   const [currentMessage, setCurrentMessage] = useState(0);
 
-  // Estado para controlar se a abertura ainda está ativa (evita erro de tipo no pointerEvents)
   const [isOpeningActive, setIsOpeningActive] = useState(true);
 
-  // --- ANIMAÇÕES ---
-  const openingViewOpacity = useRef(new Animated.Value(1)).current; // Overlay preto
-  const logoY = useRef(new Animated.Value(30)).current; // Subida do logo
-  const logoOpacity = useRef(new Animated.Value(0)).current; // Opacidade do logo
-  const contentFade = useRef(new Animated.Value(0)).current; // Opacidade do App atrás
-  const phraseFade = useRef(new Animated.Value(0)).current; // Opacidade das frases
+  const openingViewOpacity = useRef(new Animated.Value(1)).current;
+  const logoY = useRef(new Animated.Value(30)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+  const contentFade = useRef(new Animated.Value(0)).current;
+  const phraseFade = useRef(new Animated.Value(0)).current;
 
   const messages = [
     "Bem-vindo ao Gasolink!",
@@ -47,10 +45,9 @@ export default function LoginScreen() {
   ];
 
   useEffect(() => {
-    // Sequência de Abertura Cinematográfica
     Animated.sequence([
       Animated.delay(400),
-      // 1. Revela o nome branco subindo no fundo preto
+
       Animated.parallel([
         Animated.timing(logoOpacity, {
           toValue: 1,
@@ -63,8 +60,8 @@ export default function LoginScreen() {
           useNativeDriver: true,
         }),
       ]),
-      Animated.delay(1200), // Tempo com o nome parado no preto
-      // 2. A "cortina" preta some e revela o conteúdo
+      Animated.delay(1200),
+
       Animated.parallel([
         Animated.timing(openingViewOpacity, {
           toValue: 0,
@@ -78,7 +75,6 @@ export default function LoginScreen() {
         }),
       ]),
     ]).start(() => {
-      // Desativa o overlay para permitir cliques no formulário
       setIsOpeningActive(false);
       startPhraseLoop();
     });
@@ -114,7 +110,6 @@ export default function LoginScreen() {
         backgroundColor="transparent"
       />
 
-      {/* OVERLAY DE ABERTURA PRETO */}
       {isOpeningActive && (
         <Animated.View
           style={[styles.openingOverlay, { opacity: openingViewOpacity }]}
@@ -139,7 +134,6 @@ export default function LoginScreen() {
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false}>
           <Animated.View style={{ flex: 1, opacity: contentFade }}>
-            {/* HEADER COM IMAGEM */}
             <ImageBackground
               source={{
                 uri: "https://images.unsplash.com/photo-1545147458-7182281a942a?q=80&w=1200",
@@ -147,7 +141,6 @@ export default function LoginScreen() {
               style={styles.header}
             >
               <View style={styles.overlay}>
-                {/* O LOGO NO HEADER (FICA PARADO) */}
                 <Text style={styles.logoText}>GasoLink</Text>
 
                 <Animated.View
@@ -182,14 +175,13 @@ export default function LoginScreen() {
               />
 
               <Pressable
-  style={styles.forgot}
-  onPress={() => {
-    // Redireciona o usuário para a tela de recuperação de senha
-    router.push("/recuperar-senha"); 
-  }}
->
-  <Text style={styles.forgotText}>Esqueceu a senha?</Text>
-</Pressable>
+                style={styles.forgot}
+                onPress={() => {
+                  router.push("/recuperar-senha");
+                }}
+              >
+                <Text style={styles.forgotText}>Esqueceu a senha?</Text>
+              </Pressable>
 
               <GasoButton
                 title="Entrar na Conta"
