@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView, AnimatePresence } from "moti";
+// Importação do router para navegação
+import { useRouter } from "expo-router";
 
 // Constantes de Planos com cores seguras
 const PLANOS = [
@@ -22,6 +24,12 @@ const PLANOS = [
 
 export default function PlanosScreen() {
   const [selecionado, setSelecionado] = useState("premium");
+  const router = useRouter(); // Inicializando o router
+
+  const handleAtivarPlano = () => {
+    // Redireciona para a home (ajuste o caminho conforme sua estrutura de pastas)
+    router.replace("/(tabs)/home");
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -55,7 +63,7 @@ export default function PlanosScreen() {
                 transition={{ 
                   type: "spring", 
                   damping: 15,
-                  delay: index * 50 // Delay reduzido para performance
+                  delay: index * 50 
                 }}
                 style={[
                   styles.planCard, 
@@ -75,7 +83,6 @@ export default function PlanosScreen() {
                   </View>
                 </View>
 
-                {/* Animação de expansão protegida */}
                 <AnimatePresence>
                   {isSelected && (
                     <MotiView
@@ -88,6 +95,7 @@ export default function PlanosScreen() {
                       <TouchableOpacity
                         activeOpacity={0.7}
                         style={[styles.subscribeBtn, { backgroundColor: plano.cor }]}
+                        onPress={handleAtivarPlano} // Aplicando o router.replace aqui
                       >
                         <Text style={styles.subscribeBtnText}>ATIVAR AGORA</Text>
                       </TouchableOpacity>
@@ -99,7 +107,6 @@ export default function PlanosScreen() {
           );
         })}
 
-        {/* Rodapé de segurança para não cortar o conteúdo pela TabBar */}
         <View style={{ height: 120 }} />
       </ScrollView>
     </SafeAreaView>
@@ -131,7 +138,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 2,
     borderColor: "#E2E8F0",
-    // Sombras para iOS
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,

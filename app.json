@@ -1,24 +1,24 @@
 {
   "expo": {
     "name": "Gasolink",
-    "slug": "Gasolink",
-    "version": "8.0.0",
+    "slug": "gasolink",
+    "version": "10.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "gasolink",
     "assetBundlePatterns": [
       "**/*"
     ],
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.png",
     "splash": {
-      "image": "./assets/icon.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "android": {
       "package": "com.dalva.gasolink",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
+        "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#ffffff"
       }
     },

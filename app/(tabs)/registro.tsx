@@ -9,16 +9,12 @@ import {
   ScrollView,
   StatusBar,
   Pressable,
-  Image, // Adicionado Image
 } from "react-native";
 import { useRouter } from "expo-router";
 
 import { GasoInput } from "../../components/GasoInput";
 import { GasoButton } from "../../components/GasoButton";
 import { COLORS } from "../../constants/Colors";
-
-// Importando a logo real
-import LogoIcon from "../../assets/logo/logo.png";
 
 const { height } = Dimensions.get("window");
 
@@ -62,13 +58,10 @@ export default function RegisterScreen() {
         >
           <View style={styles.header}>
             <View style={styles.logoContainer}>
-              {/* SUBSTITUÍDO O QUADRADO PELA LOGO PNG */}
-              <Image 
-                source={LogoIcon} 
-                style={styles.logoImage} 
-                resizeMode="contain" 
-              />
+              {/* Removido Image e ajustado o texto para o novo padrão visual */}
               <Text style={styles.logoText}>GasoLink</Text>
+              <View style={styles.divider} />
+              <Text style={styles.headerTagline}>CRIE SUA CONTA</Text>
             </View>
           </View>
 
@@ -117,27 +110,39 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  main: { flex: 1, backgroundColor: COLORS.white },
+  main: { flex: 1, backgroundColor: "#FFF" },
   header: {
-    height: height * 0.25,
+    height: height * 0.22, // Levemente menor que o login por ser registro
     backgroundColor: COLORS.primary,
     justifyContent: "center",
     alignItems: "center",
     borderBottomLeftRadius: 50,
     borderBottomRightRadius: 50,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
   },
   logoContainer: { alignItems: "center" },
-  logoImage: {
-    width: 70,  // Um pouco menor que no Login para caber melhor no cabeçalho de registro
-    height: 70,
-    marginBottom: 8,
-  },
   logoText: {
-    color: COLORS.white,
-    fontSize: 18,
+    color: "#FFF",
+    fontSize: 32,
     fontWeight: "900",
+    letterSpacing: -1,
+  },
+  divider: {
+    width: 30,
+    height: 3,
+    backgroundColor: "rgba(255,255,255,0.3)",
+    marginVertical: 4,
+    borderRadius: 2,
+  },
+  headerTagline: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 10,
+    fontWeight: "700",
     letterSpacing: 2,
-    textTransform: "uppercase",
   },
   formCard: {
     flex: 1,
@@ -147,11 +152,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "800",
-    color: COLORS.text,
+    color: "#0f172a",
   },
   subtitle: {
     fontSize: 15,
-    color: COLORS.secondaryText,
+    color: "#64748b",
     marginBottom: 25,
     marginTop: 5,
   },
@@ -161,7 +166,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   footerText: {
-    color: COLORS.secondaryText,
+    color: "#64748b",
     fontSize: 14,
   },
   bold: {

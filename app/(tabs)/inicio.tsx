@@ -1,165 +1,269 @@
 import React, { useEffect, useState } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  Dimensions, 
-  Platform, 
-  TouchableOpacity 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Dimensions,
+  Platform,
+  TouchableOpacity,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+// Se o erro persistir no VS Code após instalar, tente reiniciar o TS Server
+// (Ctrl+Shift+P > TypeScript: Restart TS Server)
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { MotiView, AnimatePresence } from "moti";
-import { COLORS } from "../../constants/Colors";
+import { MotiView } from "moti";
 
 const { width } = Dimensions.get("window");
+
+type Posto = {
+  id: string;
+  nome: string;
+  preco: string;
+  bairro: string;
+  status: string;
+  icone: string;
+};
+
+const POSTOS_FORTALEZA: Posto[] = [
+  {
+    id: "1",
+    nome: "Ipiranga Chesf",
+    preco: "5.75",
+    bairro: "Passaré",
+    status: "Melhor Preço",
+    icone: "gas-station",
+  },
+  {
+    id: "2",
+    nome: "Shell Dragão",
+    preco: "5.92",
+    bairro: "Centro",
+    status: "Conveniência",
+    icone: "gas-station-outline",
+  },
+  {
+    id: "3",
+    nome: "Posto SP Aguanambi",
+    preco: "5.88",
+    bairro: "Fátima",
+    status: "Médio",
+    icone: "gas-station",
+  },
+  {
+    id: "4",
+    nome: "Petrobras Aldeota",
+    preco: "6.05",
+    bairro: "Aldeota",
+    status: "Premium",
+    icone: "gas-station",
+  },
+  {
+    id: "5",
+    nome: "Posto Cidade",
+    preco: "5.69",
+    bairro: "Maraponga",
+    status: "Melhor Preço",
+    icone: "gas-station",
+  },
+  {
+    id: "6",
+    nome: "Shell W. Soares",
+    preco: "5.99",
+    bairro: "Edson Queiroz",
+    status: "Médio",
+    icone: "gas-station",
+  },
+  {
+    id: "7",
+    nome: "Ipiranga Bezerra",
+    preco: "5.85",
+    bairro: "Parquelândia",
+    status: "Promoção",
+    icone: "gas-station",
+  },
+];
 
 export default function Inicio() {
   const [text, setText] = useState("");
   const [index, setIndex] = useState(0);
   const [deleting, setDeleting] = useState(false);
 
-  const activeColor = COLORS?.primary ?? "#0f172a";
+  const activeColor = "#3b82f6";
 
   const phrases = [
-    "Analisando preços em Fortaleza...",
-    "Posto Chesf: Oportunidade detectada.",
-    "Tendência de alta no Brent em 48h.",
-    "Monitoramento ativo em tempo real.",
+    "Analisando 42 postos em Fortaleza...",
+    "Economia média atual: R$ 0,45/litro.",
+    "IA: Evite a região da Aldeota agora.",
+    "Oportunidade no Passaré detectada.",
+    "Refinaria reduziu preço em 1.2% hoje.",
   ];
 
   useEffect(() => {
-  // Remova a tipagem ": NodeJS.Timeout"
-  let timer: any; 
-  const full = phrases[index] || "";
-  const speed = deleting ? 20 : 50;
+    // Solução para o erro 2503: Usar 'ReturnType<typeof setTimeout>'
+    // Isso funciona tanto em Node quanto no Browser/React Native
+    let timer: ReturnType<typeof setTimeout>;
 
-  timer = setTimeout(() => {
-    if (!deleting && text === full) {
-      setTimeout(() => setDeleting(true), 2500);
-    } else if (deleting && text === "") {
-      setDeleting(false);
-      setIndex((p) => (p + 1) % phrases.length);
-    } else {
-      setText(deleting ? full.slice(0, text.length - 1) : full.slice(0, text.length + 1));
-    }
-  }, speed);
+    const full = phrases[index];
+    const speed = deleting ? 30 : 60;
 
-  return () => clearTimeout(timer);
-}, [text, deleting, index]);
-  const postos = [
-    { id: "D1", nome: "Ipiranga Chesf", preco: "5,75", latitude: -3.7689, longitude: -38.4966, status: 'Barato' },
-    { id: "D2", nome: "Shell Dragão", preco: "5,92", latitude: -3.7215, longitude: -38.5134, status: 'Médio' },
-    { id: "D3", nome: "Posto SP Aguanambi", preco: "5,88", latitude: -3.7462, longitude: -38.5211, status: 'Médio' },
-  ];
+    timer = setTimeout(() => {
+      if (!deleting && text === full) {
+        setTimeout(() => setDeleting(true), 3000);
+      } else if (deleting && text === "") {
+        setDeleting(false);
+        setIndex((p) => (p + 1) % phrases.length);
+      } else {
+        setText(
+          deleting
+            ? full.slice(0, text.length - 1)
+            : full.slice(0, text.length + 1),
+        );
+      }
+    }, speed);
+
+    return () => clearTimeout(timer);
+  }, [text, deleting, index]);
 
   return (
-    <ScrollView 
-      style={styles.main} 
+    <ScrollView
+      style={styles.main}
       contentContainerStyle={styles.scrollContainer}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header Estilizado */}
-      <MotiView 
-        from={{ opacity: 0, translateY: -20 }}
+      {/* HEADER */}
+      <MotiView
+        from={{ opacity: 0, translateY: -10 }}
         animate={{ opacity: 1, translateY: 0 }}
         style={styles.header}
       >
         <View>
-          <Text style={styles.greeting}>Painel de Controle</Text>
-          <View style={styles.locationBadge}>
-            <Ionicons name="location" size={12} color={activeColor} />
-            <Text style={styles.locationText}>Fortaleza, CE</Text>
-          </View>
+          <Text style={styles.greeting}>Olá, Dalvan</Text>
+          <Text style={styles.subGreeting}>
+            Sua economia está 12% maior este mês.
+          </Text>
         </View>
-        <TouchableOpacity style={styles.notificationBtn}>
-          <Ionicons name="notifications-outline" size={22} color="#1e293b" />
-          <View style={styles.dot} />
+        <TouchableOpacity style={styles.profileBtn}>
+          <LinearGradient
+            colors={["#3b82f6", "#8b5cf6"]}
+            style={styles.avatarGradient}
+          >
+            <Text style={styles.avatarText}>LN</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </MotiView>
 
-      {/* Terminal Analítico (Estilo Dark Mode) */}
-      <MotiView 
-        from={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        style={styles.terminal}
-      >
-        <View style={styles.terminalHeader}>
-          <View style={styles.terminalDots}>
-            <View style={[styles.tDot, { backgroundColor: '#ff5f56' }]} />
-            <View style={[styles.tDot, { backgroundColor: '#ffbd2e' }]} />
-            <View style={[styles.tDot, { backgroundColor: '#27c93f' }]} />
-          </View>
-          <Text style={styles.terminalTitle}>GASOLINK AI • LIVE FEED</Text>
+      <View style={styles.chipRow}>
+        <View style={styles.activeChip}>
+          <View style={styles.pulseDot} />
+          <Text style={styles.activeChipText}>Monitorando: Fortaleza</Text>
         </View>
-        <View style={styles.terminalContent}>
-          <Text style={styles.terminalText}>
+      </View>
+
+      {/* TERMINAL IA */}
+      <MotiView
+        from={{ opacity: 0, translateY: 20 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        style={styles.aiCard}
+      >
+        <View style={styles.aiHeader}>
+          <MaterialCommunityIcons name="auto-fix" size={20} color="#fff" />
+          <Text style={styles.aiTitle}>Insights da GasoLink AI</Text>
+        </View>
+        <View style={styles.aiContent}>
+          <Text style={styles.aiText}>
             {"> "}
             {text}
             <MotiView
               from={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ loop: true, duration: 400 }}
+              transition={{ loop: true, duration: 500, type: "timing" }}
               style={styles.cursor}
             />
           </Text>
         </View>
       </MotiView>
 
-      <Text style={styles.sectionTitle}>Mapa Inteligente</Text>
-
-      {/* Container do Mapa com Fallback de Segurança */}
-      <View style={styles.mapWrapper}>
-        <MapView
-          style={styles.map}
-          initialRegion={{
-            latitude: -3.7462,
-            longitude: -38.5134,
-            latitudeDelta: 0.04,
-            longitudeDelta: 0.04,
-          }}
-          pitchEnabled={false}
-          rotateEnabled={false}
-          cacheEnabled={true} // Crucial para não travar Android
-        >
-          {postos.map((p) => (
-            <Marker key={p.id} coordinate={{ latitude: p.latitude, longitude: p.longitude }}>
-              <View style={styles.customMarker}>
-                <Text style={styles.markerPrice}>R${p.preco}</Text>
-              </View>
-            </Marker>
-          ))}
-        </MapView>
+      <View style={styles.mapContainer}>
+        <View style={styles.mapBlur}>
+          <MaterialCommunityIcons
+            name="map-marker-radius"
+            size={40}
+            color="#cbd5e1"
+          />
+          <Text style={styles.mapTitle}>Visualização Geográfica</Text>
+          <Text style={styles.mapSub}>
+            Módulo em processamento para versão Web
+          </Text>
+          <TouchableOpacity style={styles.mapBtn}>
+            <Text style={styles.mapBtnText}>Ativar GPS</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <View style={styles.listHeader}>
-        <Text style={styles.sectionTitle}>Melhores Opções</Text>
-        <TouchableOpacity><Text style={styles.seeAll}>Ver todos</Text></TouchableOpacity>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Ranking de Preços</Text>
+        <TouchableOpacity style={styles.filterBtn}>
+          <Ionicons name="options-outline" size={18} color="#64748b" />
+          <Text style={styles.filterText}>Filtros</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Lista de Postos Refinada */}
-      {postos.map((p, i) => (
-        <MotiView 
+      {POSTOS_FORTALEZA.map((p, i) => (
+        <MotiView
           key={p.id}
-          from={{ opacity: 0, translateX: -10 }}
-          animate={{ opacity: 1, translateX: 0 }}
-          transition={{ delay: 400 + (i * 100) }}
-          style={styles.postoCard}
+          from={{ opacity: 0, translateY: 30 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ delay: 200 + i * 100, type: "spring", damping: 15 }}
+          style={styles.cardPosto}
         >
-          <View style={styles.postoInfo}>
-            <View style={styles.iconBox}>
-              <MaterialCommunityIcons name="gas-station" size={24} color={activeColor} />
+          <View style={styles.cardLeft}>
+            <View
+              style={[
+                styles.iconContainer,
+                {
+                  backgroundColor:
+                    p.status === "Melhor Preço" ? "#eff6ff" : "#f8fafc",
+                },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name={p.icone as any}
+                size={22}
+                color={p.status === "Melhor Preço" ? "#3b82f6" : "#94a3b8"}
+              />
             </View>
             <View>
-              <Text style={styles.postoNome}>{p.nome}</Text>
-              <Text style={styles.postoDist}>A 2.4 km de você</Text>
+              <Text style={styles.nomePosto}>{p.nome}</Text>
+              <View style={styles.bairroRow}>
+                <Ionicons name="navigate-outline" size={10} color="#94a3b8" />
+                <Text style={styles.bairroText}>{p.bairro} • 1.2km</Text>
+              </View>
             </View>
           </View>
-          <View style={styles.postoPriceBox}>
-            <Text style={styles.postoPrice}>R$ {p.preco}</Text>
-            <View style={[styles.statusTag, { backgroundColor: p.status === 'Barato' ? '#dcfce7' : '#f1f5f9' }]}>
-              <Text style={[styles.statusText, { color: p.status === 'Barato' ? '#16a34a' : '#64748b' }]}>
+
+          <View style={styles.cardRight}>
+            <Text style={styles.labelPreco}>Gasolina Comum</Text>
+            <Text style={styles.precoText}>
+              <Text style={styles.cifrao}>R$</Text> {p.preco}
+            </Text>
+            <View
+              style={[
+                styles.tagStatus,
+                {
+                  backgroundColor:
+                    p.status === "Melhor Preço" ? "#dcfce7" : "#f1f5f9",
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.tagText,
+                  {
+                    color: p.status === "Melhor Preço" ? "#16a34a" : "#64748b",
+                  },
+                ]}
+              >
                 {p.status}
               </Text>
             </View>
@@ -171,40 +275,180 @@ export default function Inicio() {
 }
 
 const styles = StyleSheet.create({
-  main: { flex: 1, backgroundColor: "#F8FAFC" },
-  scrollContainer: { padding: 24, paddingBottom: 120 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 25 },
-  greeting: { fontSize: 24, fontWeight: "900", color: "#0f172a" },
-  locationBadge: { flexDirection: "row", alignItems: "center", marginTop: 4 },
-  locationText: { marginLeft: 4, fontSize: 13, color: "#64748b", fontWeight: "600" },
-  notificationBtn: { width: 45, height: 45, borderRadius: 15, backgroundColor: "#fff", justifyContent: "center", alignItems: "center", elevation: 2 },
-  dot: { position: "absolute", top: 12, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: "#ef4444", borderWidth: 2, borderColor: "#fff" },
-  
-  terminal: { backgroundColor: "#0f172a", borderRadius: 24, padding: 20, marginBottom: 30, elevation: 8 },
-  terminalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 15, borderBottomWidth: 0.5, borderBottomColor: "#334155", paddingBottom: 10 },
-  terminalDots: { flexDirection: "row", gap: 6 },
-  tDot: { width: 8, height: 8, borderRadius: 4 },
-  terminalTitle: { fontSize: 10, color: "#94a3b8", fontWeight: "800", letterSpacing: 1 },
-  terminalContent: { height: 45, justifyContent: "center" },
-  terminalText: { color: "#38bdf8", fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 14, fontWeight: "600" },
-  cursor: { width: 8, height: 16, backgroundColor: "#38bdf8", marginLeft: 4 },
-
-  sectionTitle: { fontSize: 18, fontWeight: "900", color: "#1e293b", marginBottom: 15 },
-  mapWrapper: { height: 180, borderRadius: 30, overflow: "hidden", marginBottom: 30, borderWidth: 1, borderColor: "#e2e8f0" },
-  map: { flex: 1 },
-  customMarker: { backgroundColor: "#0f172a", paddingVertical: 6, paddingHorizontal: 10, borderRadius: 12, borderWidth: 2, borderColor: "#fff" },
-  markerPrice: { color: "#fff", fontSize: 11, fontWeight: "900" },
-
-  listHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  seeAll: { color: "#6366f1", fontWeight: "700", fontSize: 13 },
-
-  postoCard: { backgroundColor: "#fff", borderRadius: 24, padding: 16, marginBottom: 12, flexDirection: "row", justifyContent: "space-between", alignItems: "center", elevation: 2 },
-  postoInfo: { flexDirection: "row", alignItems: "center", gap: 15 },
-  iconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: "#f1f5f9", justifyContent: "center", alignItems: "center" },
-  postoNome: { fontSize: 15, fontWeight: "800", color: "#1e293b" },
-  postoDist: { fontSize: 12, color: "#94a3b8", marginTop: 2 },
-  postoPriceBox: { alignItems: "flex-end" },
-  postoPrice: { fontSize: 18, fontWeight: "900", color: "#0f172a" },
-  statusTag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginTop: 4 },
-  statusText: { fontSize: 10, fontWeight: "800", textTransform: "uppercase" }
+  main: { flex: 1, backgroundColor: "#fff" },
+  scrollContainer: { padding: 20, paddingBottom: 120 },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 15,
+  },
+  greeting: { fontSize: 22, fontWeight: "900", color: "#0f172a" },
+  subGreeting: { fontSize: 13, color: "#64748b", marginTop: 2 },
+  profileBtn: {
+    shadowColor: "#3b82f6",
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  avatarGradient: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: { color: "#fff", fontWeight: "bold", fontSize: 14 },
+  chipRow: { marginBottom: 25 },
+  activeChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f1f5f9",
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#10b981",
+    marginRight: 8,
+  },
+  activeChipText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#475569",
+    textTransform: "uppercase",
+  },
+  aiCard: {
+    backgroundColor: "#0f172a",
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 25,
+    overflow: "hidden",
+  },
+  aiHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  aiTitle: {
+    fontSize: 10,
+    color: "#94a3b8",
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  aiContent: { minHeight: 45 },
+  aiText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "500",
+    lineHeight: 22,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+  },
+  cursor: {
+    width: 6,
+    height: 15,
+    backgroundColor: "#3b82f6",
+    marginLeft: 4,
+    alignSelf: "center",
+  },
+  mapContainer: {
+    height: 160,
+    backgroundColor: "#f8fafc",
+    borderRadius: 24,
+    marginBottom: 30,
+    borderWidth: 1,
+    borderColor: "#f1f5f9",
+    overflow: "hidden",
+  },
+  mapBlur: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  mapTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#1e293b",
+    marginTop: 10,
+  },
+  mapSub: { fontSize: 12, color: "#94a3b8", textAlign: "center", marginTop: 4 },
+  mapBtn: {
+    marginTop: 15,
+    backgroundColor: "#fff",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 12,
+    elevation: 1,
+  },
+  mapBtnText: { fontSize: 12, fontWeight: "700", color: "#3b82f6" },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  sectionTitle: { fontSize: 18, fontWeight: "900", color: "#0f172a" },
+  filterBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#f8fafc",
+    padding: 8,
+    borderRadius: 10,
+  },
+  filterText: { fontSize: 12, fontWeight: "600", color: "#64748b" },
+  cardPosto: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#f1f5f9",
+    elevation: 2,
+  },
+  cardLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  nomePosto: { fontSize: 15, fontWeight: "800", color: "#1e293b" },
+  bairroRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 4,
+  },
+  bairroText: { fontSize: 11, color: "#94a3b8", fontWeight: "500" },
+  cardRight: { alignItems: "flex-end" },
+  labelPreco: {
+    fontSize: 9,
+    color: "#94a3b8",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    marginBottom: 2,
+  },
+  precoText: { fontSize: 20, fontWeight: "900", color: "#0f172a" },
+  cifrao: { fontSize: 12, color: "#3b82f6" },
+  tagStatus: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginTop: 6,
+  },
+  tagText: { fontSize: 9, fontWeight: "800", textTransform: "uppercase" },
 });

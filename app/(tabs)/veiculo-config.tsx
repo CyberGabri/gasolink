@@ -10,12 +10,34 @@ import {
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { MotiView } from "moti";
+import { useRouter } from "expo-router"; // Importado
 import { COLORS } from "../../constants/Colors";
 
+interface MetricCardProps {
+  icon: React.ComponentProps<typeof Ionicons>["name"] | string;
+  label: string;
+  value: string;
+  detail: string;
+  accent: string;
+}
+
+interface CheckItemProps {
+  icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"] | string;
+  label: string;
+  status: string;
+  warning?: boolean;
+}
+
 export default function VeiculoScreen() {
-  // Fallbacks de cores para evitar erro de 'undefined' no APK
+  const router = useRouter(); // Inicializado
+
   const primaryColor = COLORS?.primary ?? "#0f172a";
-  const accentColor = "#FFD700"; // Dourado Premium
+  const accentColor = "#FFD700";
+
+  const handleGoToSettings = () => {
+    // Rota ativada com replace
+    router.replace("/(tabs)/home");
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -23,7 +45,6 @@ export default function VeiculoScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* HEADER DA TELA */}
         <View style={styles.header}>
           <View>
             <Text style={styles.brandTitle}>MEU VEÍCULO</Text>
@@ -40,7 +61,6 @@ export default function VeiculoScreen() {
           </MotiView>
         </View>
 
-        {/* CARD DO CARRO - DESIGN PREMIUM */}
         <MotiView
           from={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -73,7 +93,6 @@ export default function VeiculoScreen() {
           </Text>
         </MotiView>
 
-        {/* MÉTRICAS DE DESEMPENHO */}
         <View style={styles.statsGrid}>
           <MetricCard
             icon="gas-station-outline"
@@ -91,9 +110,9 @@ export default function VeiculoScreen() {
           />
         </View>
 
-        {/* CHECKLIST DE OTIMIZAÇÃO */}
         <Text style={styles.sectionTitle}>Checklist de Eficiência</Text>
 
+        {/* Se quiser que o checklist também navegue, basta adicionar onPress aqui */}
         <CheckItem
           icon="speedometer"
           label="Calibragem de Pneus"
@@ -103,9 +122,10 @@ export default function VeiculoScreen() {
         <CheckItem icon="oil" label="Troca de Óleo" status="Em dia" />
         <CheckItem icon="filter-outline" label="Filtro de Ar" status="Em dia" />
 
-        {/* BOTÃO DE AJUSTES */}
+        {/* BOTÃO ATIVADO COM REPLACE */}
         <TouchableOpacity
           activeOpacity={0.8}
+          onPress={handleGoToSettings}
           style={[styles.configButton, { backgroundColor: accentColor }]}
         >
           <Ionicons name="options-outline" size={20} color="#000" />
@@ -116,22 +136,26 @@ export default function VeiculoScreen() {
   );
 }
 
-// COMPONENTE: CARD DE MÉTRICA
-const MetricCard = ({ icon, label, value, detail, accent }: any) => (
+const MetricCard = ({
+  icon,
+  label,
+  value,
+  detail,
+  accent,
+}: MetricCardProps) => (
   <View style={styles.metricCard}>
-    <Ionicons name={icon} size={24} color={accent} />
+    <Ionicons name={icon as any} size={24} color={accent} />
     <Text style={styles.metricLabel}>{label}</Text>
     <Text style={styles.metricValue}>{value}</Text>
     <Text style={styles.metricDetail}>{detail}</Text>
   </View>
 );
 
-// COMPONENTE: ITEM DE CHECKLIST
-const CheckItem = ({ icon, label, status, warning }: any) => (
+const CheckItem = ({ icon, label, status, warning }: CheckItemProps) => (
   <View style={styles.checkItem}>
     <View style={styles.checkLeft}>
       <MaterialCommunityIcons
-        name={icon}
+        name={icon as any}
         size={22}
         color={warning ? "#ef4444" : "#10b981"}
       />
@@ -149,7 +173,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF" },
   scrollContent: {
     paddingHorizontal: 25,
-    paddingBottom: 140, // Espaço extra para não cobrir com a TabBar flutuante
+    paddingBottom: 140,
     paddingTop: Platform.OS === "android" ? 20 : 0,
   },
   header: {
@@ -182,7 +206,6 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   activeText: { fontSize: 10, fontWeight: "900", color: "#166534" },
-
   carMainCard: {
     borderRadius: 30,
     padding: 25,
@@ -202,7 +225,6 @@ const styles = StyleSheet.create({
   },
   recommendationLabel: { fontSize: 11, fontWeight: "900", marginBottom: 8 },
   recommendationText: { color: "#cbd5e1", fontSize: 14, lineHeight: 22 },
-
   statsGrid: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -215,7 +237,6 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: "#f1f5f9",
-    elevation: 2,
   },
   metricLabel: {
     fontSize: 12,
@@ -230,7 +251,6 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   metricDetail: { fontSize: 11, color: "#10b981", fontWeight: "700" },
-
   sectionTitle: {
     fontSize: 16,
     fontWeight: "900",
@@ -257,7 +277,6 @@ const styles = StyleSheet.create({
     color: "#334155",
   },
   checkStatus: { fontSize: 12, fontWeight: "900" },
-
   configButton: {
     height: 60,
     borderRadius: 20,
