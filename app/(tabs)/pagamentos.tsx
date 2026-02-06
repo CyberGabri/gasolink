@@ -34,10 +34,14 @@ export default function PagamentosScreen() {
   const [selectedMethod, setSelectedMethod] = useState(1);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={styles.safe}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#ffffff"
+        translucent={false}
+      />
 
-      {/* HEADER */}
+      {/* HEADER FIXO */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.replace("/(tabs)/")}
@@ -45,7 +49,9 @@ export default function PagamentosScreen() {
         >
           <Ionicons name="chevron-back" size={24} color={COLORS.secondary} />
         </TouchableOpacity>
+
         <Text style={styles.headerTitle}>Pagamentos</Text>
+
         <TouchableOpacity style={styles.addBtn}>
           <Ionicons
             name="add-circle-outline"
@@ -55,18 +61,18 @@ export default function PagamentosScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* CONTEÚDO ROLÁVEL */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* CARTÃO INTERATIVO COM GLASSMORPHISM */}
+        {/* CARTÃO */}
         <MotiView
           from={{ opacity: 0, scale: 0.8, rotateX: "-20deg" }}
           animate={{ opacity: 1, scale: 1, rotateX: "0deg" }}
           transition={{ type: "spring", damping: 12 }}
         >
           <TouchableOpacity activeOpacity={0.9} style={styles.creditCard}>
-            {/* Esferas decorativas de fundo */}
             <View style={styles.cardCircle1} />
             <View style={styles.cardCircle2} />
 
@@ -97,7 +103,6 @@ export default function PagamentosScreen() {
               </View>
             </View>
 
-            {/* Brilho Animado (Reflexo) */}
             <MotiView
               animate={{
                 translateX: [-width, width],
@@ -111,7 +116,6 @@ export default function PagamentosScreen() {
 
         <Text style={styles.sectionTitle}>MÉTODOS DE PAGAMENTO</Text>
 
-        {/* LISTA DE MÉTODOS */}
         <PaymentMethod
           icon="logo-google"
           label="Google Pay"
@@ -136,33 +140,12 @@ export default function PagamentosScreen() {
           onPress={() => setSelectedMethod(3)}
         />
 
-        {/* INFO DE SEGURANÇA */}
-        <View style={styles.securityBox}>
-          <MaterialCommunityIcons
-            name="shield-lock-outline"
-            size={22}
-            color={COLORS.primary}
-          />
-          <Text style={styles.securityText}>
-            Ambiente seguro com certificação PCI DSS. Seus dados estão
-            protegidos.
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.confirmBtn}
-          onPress={() => router.replace("/(tabs)/")}
-        >
-          <Text style={styles.confirmBtnText}>SALVAR PREFERÊNCIAS</Text>
-        </TouchableOpacity>
-
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// Componente para as linhas de pagamento
 const PaymentMethod = ({ icon, label, sub, active, onPress }: any) => (
   <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
     <MotiView
@@ -200,23 +183,26 @@ const PaymentMethod = ({ icon, label, sub, active, onPress }: any) => (
         </View>
       </View>
       {active && (
-        <MotiView from={{ scale: 0 }} animate={{ scale: 1 }}>
-          <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
-        </MotiView>
+        <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
       )}
     </MotiView>
   </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
     height: 70,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderColor: "#f1f5f9",
   },
+
   backBtn: {
     width: 45,
     height: 45,
@@ -225,7 +211,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  headerTitle: { fontSize: 18, fontWeight: "800", color: COLORS.secondary },
+
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: COLORS.secondary,
+  },
+
   addBtn: {
     width: 45,
     height: 45,
@@ -233,23 +225,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  scrollContent: { paddingHorizontal: 25, paddingTop: 10 },
+  scrollContent: {
+    paddingHorizontal: 25,
+    paddingTop: 20,
+    paddingBottom: 40,
+  },
 
-  // Design do Cartão
   creditCard: {
-    width: "100%",
     height: 220,
     backgroundColor: COLORS.secondary,
     borderRadius: 30,
     padding: 25,
-    marginVertical: 15,
+    marginBottom: 20,
     overflow: "hidden",
     justifyContent: "space-between",
-    elevation: 20,
-    shadowColor: COLORS.primary,
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
   },
+
   cardCircle1: {
     position: "absolute",
     top: -30,
@@ -259,6 +250,7 @@ const styles = StyleSheet.create({
     borderRadius: 70,
     backgroundColor: "rgba(255,255,255,0.06)",
   },
+
   cardCircle2: {
     position: "absolute",
     bottom: -40,
@@ -268,32 +260,15 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     backgroundColor: "rgba(99, 102, 241, 0.15)",
   },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  cardNumber: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "700",
-    letterSpacing: 2,
-    marginTop: 15,
-  },
-  cardLimit: {
-    color: "rgba(255,255,255,0.4)",
-    fontSize: 12,
-    marginTop: 5,
-    fontWeight: "600",
-  },
+
+  cardHeader: { flexDirection: "row", justifyContent: "space-between" },
+  cardNumber: { color: "#fff", fontSize: 22, fontWeight: "700" },
+  cardLimit: { color: "rgba(255,255,255,0.4)", fontSize: 12 },
+
   cardFooter: { flexDirection: "row", justifyContent: "space-between" },
-  cardLabel: {
-    color: "rgba(255,255,255,0.4)",
-    fontSize: 10,
-    fontWeight: "700",
-    marginBottom: 2,
-  },
+  cardLabel: { color: "rgba(255,255,255,0.4)", fontSize: 10 },
   cardValue: { color: "#fff", fontSize: 14, fontWeight: "700" },
+
   cardShine: {
     position: "absolute",
     top: 0,
@@ -307,22 +282,19 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "900",
     color: COLORS.textSecondary,
-    marginTop: 25,
-    marginBottom: 15,
+    marginVertical: 15,
     letterSpacing: 1.2,
   },
 
-  // Métodos de Pagamento
   methodCard: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
     padding: 16,
     borderRadius: 22,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: "#f1f5f9",
   },
+
   methodInfo: { flexDirection: "row", alignItems: "center" },
   iconContainer: {
     width: 48,
@@ -332,44 +304,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 15,
   },
+
   methodLabel: { fontSize: 16, fontWeight: "700" },
-  methodSubText: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-
-  securityBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f8fafc",
-    padding: 15,
-    borderRadius: 18,
-    marginTop: 20,
-    borderStyle: "dashed",
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  securityText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginLeft: 12,
-    flex: 1,
-    lineHeight: 18,
-  },
-
-  confirmBtn: {
-    height: 65,
-    backgroundColor: COLORS.secondary,
-    borderRadius: 22,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 30,
-    shadowColor: COLORS.secondary,
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  confirmBtnText: {
-    color: "#fff",
-    fontWeight: "900",
-    fontSize: 15,
-    letterSpacing: 1,
-  },
+  methodSubText: { fontSize: 12, color: COLORS.textSecondary },
 });

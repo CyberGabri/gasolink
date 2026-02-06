@@ -6,9 +6,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "gasolink",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "icon": "./assets/logo.png",
     "splash": {
       "image": "./assets/logo.png",
@@ -20,27 +18,24 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": ["NOTIFICATIONS"]
     },
     "ios": {
       "bundleIdentifier": "com.dalva.gasolink",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "usesAppleSignIn": false,
+      "infoPlist": {
+        "NSUserNotificationUsageDescription": "Este app utiliza notificações para avisar sobre atualizações e novos recursos."
+      }
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": { "policy": "appVersion" },
     "updates": {
       "url": "https://u.expo.dev/973de4ba-cde4-47a8-b766-700384cc22d6",
       "fallbackToCacheTimeout": 0
     },
-    "extra": {
-      "eas": {
-        "projectId": "973de4ba-cde4-47a8-b766-700384cc22d6"
-      }
-    },
-    "plugins": [
-      "expo-router"
-    ],
+    "extra": { "eas": { "projectId": "973de4ba-cde4-47a8-b766-700384cc22d6" } },
+    "plugins": ["expo-router"],
     "owner": "luanzinbr"
   }
 }
