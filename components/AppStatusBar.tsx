@@ -14,6 +14,7 @@ export default function AppStatusBar({
       barStyle={theme === "light" ? "dark-content" : "light-content"}
       backgroundColor={Platform.OS === "android" ? backgroundColor : undefined}
       translucent={false}
+      hidden={false}
     />
   );
 }
