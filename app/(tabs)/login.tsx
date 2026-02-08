@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import { GasoInput } from "../../components/GasoInput";
 import { GasoButton } from "../../components/GasoButton";
 
@@ -23,19 +22,18 @@ const { height, width } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState(false);
-
   const [isVerifying, setIsVerifying] = useState(true);
-  const [isOpeningActive, setIsOpeningActive] = useState(true);
   const [currentMessage, setCurrentMessage] = useState(0);
 
-  const contentFade = useRef(new Animated.Value(0)).current;
-  const openingViewOpacity = useRef(new Animated.Value(1)).current;
-  const logoY = useRef(new Animated.Value(20)).current;
+  const openingTranslateY = useRef(new Animated.Value(0)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
+  const logoY = useRef(new Animated.Value(20)).current;
+  const contentFade = useRef(new Animated.Value(1)).current;
   const phraseFade = useRef(new Animated.Value(0)).current;
   const shakeAnimation = useRef(new Animated.Value(0)).current;
 
@@ -50,52 +48,37 @@ export default function LoginScreen() {
   }, []);
 
   const checkStatus = async () => {
-    try {
-      const value = await AsyncStorage.getItem("loggedIn");
-      if (value === "true") {
-        router.replace("/(tabs)/");
-      } else {
-        setIsVerifying(false);
-        startOpeningAnimation();
-      }
-    } catch (e) {
+    const value = await AsyncStorage.getItem("loggedIn");
+    if (value === "true") {
+      router.replace("/(tabs)/");
+    } else {
       setIsVerifying(false);
       startOpeningAnimation();
+      startPhraseLoop();
     }
   };
 
   const startOpeningAnimation = () => {
     Animated.sequence([
-      Animated.delay(100),
       Animated.parallel([
         Animated.timing(logoOpacity, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(logoY, {
-          toValue: 0,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.delay(600),
-      Animated.parallel([
-        Animated.timing(openingViewOpacity, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(contentFade, {
           toValue: 1,
           duration: 700,
           useNativeDriver: true,
         }),
+        Animated.timing(logoY, {
+          toValue: 0,
+          duration: 700,
+          useNativeDriver: true,
+        }),
       ]),
-    ]).start(() => {
-      setIsOpeningActive(false);
-      startPhraseLoop();
-    });
+      Animated.delay(500),
+      Animated.timing(openingTranslateY, {
+        toValue: -height,
+        duration: 900,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   const startPhraseLoop = () => {
@@ -104,7 +87,8 @@ export default function LoginScreen() {
       duration: 500,
       useNativeDriver: true,
     }).start();
-    const interval = setInterval(() => {
+
+    setInterval(() => {
       Animated.timing(phraseFade, {
         toValue: 0,
         duration: 400,
@@ -118,7 +102,6 @@ export default function LoginScreen() {
         }).start();
       });
     }, 4000);
-    return () => clearInterval(interval);
   };
 
   const handleLogin = async () => {
@@ -137,96 +120,40 @@ export default function LoginScreen() {
   const triggerErrorAnimation = () => {
     setErrors(true);
     Animated.sequence([
-      Animated.timing(shakeAnimation, {
-        toValue: 10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnimation, {
-        toValue: -10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnimation, {
-        toValue: 0,
-        duration: 50,
-        useNativeDriver: true,
-      }),
+      Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: -10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 0, duration: 50, useNativeDriver: true }),
     ]).start();
   };
 
-  if (isVerifying)
-    return <View style={{ flex: 1, backgroundColor: "#000000" }} />;
+  if (isVerifying) {
+    return <View style={{ flex: 1, backgroundColor: "#000" }} />;
+  }
 
   return (
     <View style={styles.main}>
-      <StatusBar
-        barStyle="light-content"
-        translucent
-        backgroundColor="transparent"
-      />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {/* Camada de Abertura - PRETO PURO */}
-      {isOpeningActive && (
-        <Animated.View
-          style={[styles.openingOverlay, { opacity: openingViewOpacity }]}
-        >
-          <Animated.Text
-            style={[
-              styles.logoOpening,
-              { opacity: logoOpacity, transform: [{ translateY: logoY }] },
-            ]}
-          >
-            GasoLink
-          </Animated.Text>
-        </Animated.View>
-      )}
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1 }}
-      >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          bounces={false}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Animated.View
-            style={{
-              flex: 1,
-              opacity: contentFade,
-              backgroundColor: "#000000",
-            }}
-          >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false} keyboardShouldPersistTaps="handled">
+          <Animated.View style={{ flex: 1, opacity: contentFade }}>
             <ImageBackground
-              source={{
-                uri: "https://images.unsplash.com/photo-1545147458-7182281a942a?q=80&w=1200",
-              }}
+              source={{ uri: "https://images.unsplash.com/photo-1545147458-7182281a942a?q=80&w=1200" }}
               style={styles.header}
             >
-              {/* Overlay da imagem também em preto puro com opacidade controlada */}
               <View style={styles.overlay}>
                 <Text style={styles.logoText}>GasoLink</Text>
-                <Animated.View
-                  style={[styles.animationContainer, { opacity: phraseFade }]}
-                >
-                  <Text style={styles.animatedText}>
-                    {messages[currentMessage]}
-                  </Text>
+                <Animated.View style={{ opacity: phraseFade, marginTop: 10 }}>
+                  <Text style={styles.animatedText}>{messages[currentMessage]}</Text>
                 </Animated.View>
               </View>
             </ImageBackground>
 
             <View style={styles.formCard}>
               <Text style={styles.title}>Olá novamente!</Text>
-              <Text style={styles.subtitle}>
-                Acesse sua conta para continuar.
-              </Text>
+              <Text style={styles.subtitle}>Acesse sua conta para continuar.</Text>
 
-              <Animated.View
-                style={{ transform: [{ translateX: shakeAnimation }] }}
-              >
+              <Animated.View style={{ transform: [{ translateX: shakeAnimation }] }}>
                 <GasoInput
                   label="E-mail"
                   placeholder="seu@email.com"
@@ -248,96 +175,79 @@ export default function LoginScreen() {
                   }}
                   editable={!isLoading}
                 />
-                {errors && (
-                  <Text style={styles.errorText}>Preencha todos os campos</Text>
-                )}
+                {errors && <Text style={styles.errorText}>Preencha todos os campos</Text>}
               </Animated.View>
 
-              <Pressable
-                style={styles.forgot}
-                onPress={() => router.push("/recuperar-senha")}
-              >
+              <Pressable style={styles.forgot} onPress={() => router.push("/recuperar-senha")}>
                 <Text style={styles.forgotText}>Esqueceu a senha?</Text>
               </Pressable>
 
-              <GasoButton
-                title={isLoading ? "Carregando..." : "Entrar na Conta"}
-                onPress={handleLogin}
-              />
+              <GasoButton title={isLoading ? "Carregando..." : "Entrar na Conta"} onPress={handleLogin} />
 
-              <TouchableOpacity
-                style={styles.skipBtn}
-                onPress={() => router.replace("/(tabs)/")}
-              >
+              <TouchableOpacity style={styles.skipBtn} onPress={() => router.replace("/(tabs)/")}>
                 <Text style={styles.skipText}>Continuar sem login</Text>
               </TouchableOpacity>
 
-              <Pressable
-                style={styles.footerBtn}
-                onPress={() => router.push("/registro")}
-              >
+              <Pressable style={styles.footerBtn} onPress={() => router.push("/registro")}>
                 <Text style={styles.footerText}>
-                  Não tem conta?{" "}
-                  <Text style={styles.footerHighlight}>Cadastre-se</Text>
+                  Não tem conta? <Text style={styles.footerHighlight}>Cadastre-se</Text>
                 </Text>
               </Pressable>
             </View>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Animated.View
+        style={[
+          styles.openingOverlay,
+          {
+            transform: [{ translateY: openingTranslateY }],
+          },
+        ]}
+      >
+        <Animated.Text
+          style={[
+            styles.logoOpening,
+            {
+              opacity: logoOpacity,
+              transform: [{ translateY: logoY }],
+            },
+          ]}
+        >
+          GasoLink
+        </Animated.Text>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  main: {
-    flex: 1,
-    backgroundColor: "#000000", // Preto absoluto
-  },
+  main: { flex: 1, backgroundColor: "#000" },
   openingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#000000", // Preto absoluto
-    zIndex: 9999,
+    position: "absolute",
+    height,
+    width,
+    backgroundColor: "#000",
+    zIndex: 999,
     justifyContent: "center",
     alignItems: "center",
   },
-  logoOpening: {
-    color: "#FFFFFF",
-    fontSize: 55,
-    fontWeight: "900",
-    letterSpacing: -2,
-  },
-  header: {
-    height: height * 0.45,
-    width: width,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#000000",
-  },
+  logoOpening: { color: "#FFF", fontSize: 56, fontWeight: "900", letterSpacing: -2 },
+  header: { height: height * 0.45, width, backgroundColor: "#000" },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.7)", // Escurece a imagem com preto
+    backgroundColor: "rgba(0,0,0,0.7)",
     justifyContent: "center",
     alignItems: "center",
   },
-  logoText: {
-    color: "#FFFFFF",
-    fontSize: 52,
-    fontWeight: "900",
-    letterSpacing: -2,
-  },
-  animationContainer: { height: 30, marginTop: 10 },
-  animatedText: {
-    color: "#E2E8F0",
-    fontSize: 16,
-    textAlign: "center",
-    fontWeight: "600",
-  },
+  logoText: { color: "#FFF", fontSize: 52, fontWeight: "900", letterSpacing: -2 },
+  animatedText: { color: "#E2E8F0", fontSize: 16, fontWeight: "600" },
   formCard: {
     flex: 1,
     paddingHorizontal: 30,
     paddingTop: 40,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FFF",
     marginTop: -60,
     borderTopLeftRadius: 50,
     borderTopRightRadius: 50,
@@ -358,9 +268,5 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   skipBtn: { marginTop: 20, alignSelf: "center", padding: 10 },
-  skipText: {
-    color: "#94A3B8",
-    fontWeight: "700",
-    textDecorationLine: "underline",
-  },
+  skipText: { color: "#94A3B8", fontWeight: "700", textDecorationLine: "underline" },
 });
