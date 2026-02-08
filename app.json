@@ -34,7 +34,11 @@
       "url": "https://u.expo.dev/973de4ba-cde4-47a8-b766-700384cc22d6",
       "fallbackToCacheTimeout": 0
     },
-    "extra": { "eas": { "projectId": "973de4ba-cde4-47a8-b766-700384cc22d6" } },
+    "extra": {
+      "eas": {
+        "projectId": "973de4ba-cde4-47a8-b766-700384cc22d6"
+      }
+    },
     "plugins": ["expo-router"],
     "owner": "luanzinbr"
   }

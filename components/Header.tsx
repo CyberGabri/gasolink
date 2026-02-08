@@ -19,7 +19,7 @@ export default function Header({ isLoggedIn, onPress }: Props) {
             <MaterialCommunityIcons
               name="shield-check"
               size={14}
-              color="#10b981"
+              color="#00422C"
             />
           ) : (
             <Ionicons name="sparkles" size={14} color="#94a3b8" />

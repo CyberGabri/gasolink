@@ -1,14 +1,12 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { StyleSheet, View, ActivityIndicator, Platform } from "react-native";
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { StyleSheet, View, ActivityIndicator, Platform, StatusBar } from "react-native";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Audio } from "expo-av";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Updates from "expo-updates";
 import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 
 import Inicio from "./inicio";
 import VeiculoConfig from "./veiculo-config";
@@ -25,10 +23,9 @@ import useClickLimit from "@/hooks/useClickLimit";
 
 type TabType = "inicio" | "veiculo-config" | "financeiro" | "perfil-user";
 
-/* =========================
-   NOTIFICATION HANDLER
-========================= */
-if (Platform.OS !== "web") {
+const CAN_USE_PUSH = Platform.OS !== "web" && Constants.appOwnership !== "expo";
+
+if (CAN_USE_PUSH) {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
@@ -40,11 +37,8 @@ if (Platform.OS !== "web") {
   });
 }
 
-/* =========================
-   REGISTER PUSH (SAFE)
-========================= */
 async function registerForPushNotifications() {
-  if (Platform.OS === "web") return;
+  if (!CAN_USE_PUSH) return;
 
   const { status } = await Notifications.getPermissionsAsync();
   let finalStatus = status;
@@ -66,9 +60,6 @@ async function registerForPushNotifications() {
   await Notifications.getExpoPushTokenAsync();
 }
 
-/* =========================
-   SCREEN
-========================= */
 export default function HomeScreen() {
   const [isReady, setIsReady] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -85,7 +76,7 @@ export default function HomeScreen() {
   if (!isReady) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color="#000000" />
       </View>
     );
   }
@@ -103,7 +94,6 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
 
   const [currentTab, setCurrentTab] = useState<TabType>("inicio");
   const [modalVisible, setModalVisible] = useState(false);
-
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [showNewFeatures, setShowNewFeatures] = useState(false);
@@ -126,17 +116,15 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
   }, []);
 
   useEffect(() => {
-    if (Platform.OS === "web") return;
+    if (!CAN_USE_PUSH) return;
 
     const received = Notifications.addNotificationReceivedListener(() => {
       setShowNewFeatures(true);
     });
 
-    const response = Notifications.addNotificationResponseReceivedListener(
-      () => {
-        setShowNewFeatures(true);
-      },
-    );
+    const response = Notifications.addNotificationResponseReceivedListener(() => {
+      setShowNewFeatures(true);
+    });
 
     return () => {
       received.remove();
@@ -158,11 +146,11 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
     try {
       const { sound } = await Audio.Sound.createAsync(
         require("../../assets/sounds/click.mp3"),
-        { volume: 0.5 },
+        { volume: 0.5 }
       );
       await sound.playAsync();
       sound.setOnPlaybackStatusUpdate(
-        (s: any) => s.didJustFinish && sound.unloadAsync(),
+        (s: any) => s.didJustFinish && sound.unloadAsync()
       );
     } catch {}
   }, []);
@@ -195,9 +183,12 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
 
   return (
     <View style={styles.container}>
-      <AppStatusBar theme="light" backgroundColor="#ffffff" />
+      <AppStatusBar theme="light" backgroundColor="#FFFFFF" />
 
-      <ProBadge />
+      {/* ProBadge posicionado abaixo da StatusBar */}
+      <View style={{ marginTop: Platform.OS === "android" ? StatusBar.currentHeight : insets.top }}>
+        <ProBadge />
+      </View>
 
       <NewFeaturesBanner
         visible={showNewFeatures}
@@ -213,9 +204,13 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
         />
       )}
 
-      <View style={{ paddingTop: insets.top, flex: 1 }}>{renderScreen()}</View>
+      <View style={[styles.content, { paddingBottom: 80 + insets.bottom }]}>
+        {renderScreen()}
+      </View>
 
-      <TabBar currentTab={currentTab} onTabPress={handleTabPress} />
+      <View style={[styles.footer, { paddingBottom: insets.bottom }]}>
+        <TabBar currentTab={currentTab} onTabPress={handleTabPress} />
+      </View>
 
       <LoginModal
         visible={modalVisible}
@@ -228,6 +223,14 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
   loading: { flex: 1, justifyContent: "center", alignItems: "center" },
+  content: { flex: 1 },
+  footer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgb(255, 255, 255)",
+  },
 });
