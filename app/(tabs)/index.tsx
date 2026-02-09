@@ -16,6 +16,7 @@ import Inicio from "./inicio";
 import VeiculoConfig from "./veiculo-config";
 import Financeiro from "./meu-plano";
 import PerfilUser from "./perfil-user";
+import Splash from "./SplashScreen";
 
 import TabBar from "@/components/TabBar";
 import LoginModal from "@/components/LoginModal";
@@ -29,8 +30,6 @@ LogBox.ignoreLogs(["expo-notifications: Android Push notifications"]);
 
 type TabType = "inicio" | "veiculo-config" | "financeiro" | "perfil-user";
 
-/* ================= SUPABASE ================= */
-
 const supabase = createClient(
   "https://llwoggphcjolztgobach.supabase.co",
   "sb_publishable_6KK9oSOhlIFBvdRdMGzTlQ_B_GkoxlI",
@@ -39,11 +38,7 @@ const supabase = createClient(
   },
 );
 
-/* ================= PUSH ================= */
-
 const CAN_USE_PUSH = Platform.OS !== "web" && Constants.appOwnership !== "expo";
-
-/* ================= VERSION ================= */
 
 function isNewerVersion(remote: string, local: string) {
   const r = remote.split(".").map(Number);
@@ -58,14 +53,19 @@ function isNewerVersion(remote: string, local: string) {
   return false;
 }
 
-/* ================= APP ================= */
-
 export default function HomeScreen() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     AsyncStorage.getItem("loggedIn").then((v) => setIsLoggedIn(v === "true"));
+    const timer = setTimeout(() => setShowSplash(false), 2000);
+    return () => clearTimeout(timer);
   }, []);
+
+  if (showSplash) {
+    return <Splash />;
+  }
 
   return (
     <SafeAreaProvider>
@@ -90,17 +90,15 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
     onLimitReached: () => setModalVisible(true),
   });
 
-  /* ===== FUNÇÃO CENTRAL DE CHECK ===== */
-
   const checkUpdate = useCallback(async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("app_versions")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (error || !data) return;
+    if (!data) return;
 
     const localVersion =
       Constants.expoConfig?.version || Constants.manifest?.version || "0.0.0";
@@ -112,23 +110,16 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
     }
   }, []);
 
-  /* ===== GET AO ABRIR ===== */
-
   useEffect(() => {
     checkUpdate();
   }, [checkUpdate]);
 
-  /* ===== GET EM INTERVALO (POLLING) ===== */
-
   useEffect(() => {
     const interval = setInterval(() => {
       if (!forceUpdate) checkUpdate();
-    }, 10000); // ⏱️ 10 segundos
-
+    }, 10000);
     return () => clearInterval(interval);
   }, [checkUpdate, forceUpdate]);
-
-  /* ===== REALTIME (EXTRA SEGURANÇA) ===== */
 
   useEffect(() => {
     const channel = supabase
@@ -140,9 +131,7 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
           schema: "public",
           table: "app_versions",
         },
-        () => {
-          checkUpdate();
-        },
+        () => checkUpdate(),
       )
       .subscribe();
 
@@ -150,8 +139,6 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
       supabase.removeChannel(channel);
     };
   }, [checkUpdate]);
-
-  /* ===== UI ===== */
 
   const playClick = useCallback(async () => {
     try {

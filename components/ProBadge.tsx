@@ -16,14 +16,14 @@ export default function ProBadge() {
   return (
     <>
       <TouchableOpacity
-        activeOpacity={1}
+        activeOpacity={0.85}
         style={styles.container}
         onPress={() => setVisible(true)}
       >
         <Text style={styles.name}>Gasolink IA</Text>
 
         <View style={styles.proContainer}>
-          <MaterialIcons name="verified" size={20} color="#000000" />
+          <MaterialIcons name="verified" size={18} color="#2563eb" />
           <Text style={styles.proText}>PRO</Text>
         </View>
       </TouchableOpacity>
@@ -36,7 +36,7 @@ export default function ProBadge() {
       >
         <View style={styles.overlay}>
           <View style={styles.modal}>
-            <MaterialIcons name="verified" size={28} color="#FFFFFF" />
+            <MaterialIcons name="verified" size={32} color="#2563eb" />
 
             <Text style={styles.modalTitle}>Gasolink Pro</Text>
             <Text style={styles.modalText}>
@@ -58,56 +58,83 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#000",
+    backgroundColor: "#ffffff",
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    marginTop: 4,
-    minWidth: 150,
+    paddingVertical: 10,
+    borderRadius: 14,
+    minWidth: 180,
 
     ...(Platform.OS === "web"
-      ? { boxShadow: "0 3px 8px rgba(0, 0, 0, 0.35)" }
+      ? { boxShadow: "0 4px 12px rgba(0,0,0,0.12)" }
       : {
           shadowColor: "#000",
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.35,
-          shadowRadius: 3,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.15,
+          shadowRadius: 6,
           elevation: 4,
         }),
   },
 
-  name: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  name: {
+    color: "#0f172a",
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+  },
 
-  proContainer: { flexDirection: "row", alignItems: "center", gap: 6 },
+  proContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
 
-  proText: { color: "#fff", fontSize: 14, fontWeight: "800", letterSpacing: 0.5 },
+  proText: {
+    color: "#2563eb",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0.6,
+  },
 
   overlay: {
-    flex: 6,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
     justifyContent: "center",
     alignItems: "center",
   },
 
   modal: {
-    backgroundColor: "#000",
-    borderRadius: 16,
-    padding: 40,
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    padding: 36,
     width: "90%",
     alignItems: "center",
   },
 
-  modalTitle: { color: "#fff", fontSize: 18, fontWeight: "700", marginTop: 8 },
-  modalText: { color: "#fff", fontSize: 15, textAlign: "center", marginTop: 8, opacity: 0.85 },
+  modalTitle: {
+    color: "#0f172a",
+    fontSize: 18,
+    fontWeight: "800",
+    marginTop: 10,
+  },
+
+  modalText: {
+    color: "#475569",
+    fontSize: 15,
+    textAlign: "center",
+    marginTop: 8,
+  },
 
   button: {
-    marginTop: 16,
-    borderWidth: 0.5,
-    borderColor: "#fff",
-    paddingHorizontal: 18,
-    paddingVertical: 8,
+    marginTop: 20,
+    backgroundColor: "#2563eb",
+    paddingHorizontal: 22,
+    paddingVertical: 10,
     borderRadius: 999,
   },
 
-  buttonText: { color: "#fff", fontWeight: "600", fontSize: 14 },
+  buttonText: {
+    color: "#ffffff",
+    fontWeight: "700",
+    fontSize: 14,
+  },
 });
