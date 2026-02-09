@@ -19,9 +19,9 @@ import PerfilUser from "./perfil-user";
 
 import TabBar from "@/components/TabBar";
 import LoginModal from "@/components/LoginModal";
-import NewFeaturesBanner from "@/components/NewFeaturesBanner";
 import AppStatusBar from "@/components/AppStatusBar";
 import ProBadge from "@/components/ProBadge";
+import ForceUpdateModal from "@/components/ForceUpdateModal";
 
 import useClickLimit from "@/hooks/useClickLimit";
 
@@ -29,43 +29,21 @@ LogBox.ignoreLogs(["expo-notifications: Android Push notifications"]);
 
 type TabType = "inicio" | "veiculo-config" | "financeiro" | "perfil-user";
 
+/* ================= SUPABASE ================= */
+
 const supabase = createClient(
   "https://llwoggphcjolztgobach.supabase.co",
-  "SUA_ANON_KEY",
+  "sb_publishable_6KK9oSOhlIFBvdRdMGzTlQ_B_GkoxlI",
+  {
+    realtime: { params: { eventsPerSecond: 10 } },
+  },
 );
+
+/* ================= PUSH ================= */
 
 const CAN_USE_PUSH = Platform.OS !== "web" && Constants.appOwnership !== "expo";
 
-if (CAN_USE_PUSH) {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-    }),
-  });
-}
-
-async function registerForPushNotifications() {
-  if (!CAN_USE_PUSH) return;
-
-  const { status } = await Notifications.getPermissionsAsync();
-  if (status !== "granted") {
-    const request = await Notifications.requestPermissionsAsync();
-    if (request.status !== "granted") return;
-  }
-
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("updates", {
-      name: "Atualizações do Gasolink",
-      importance: Notifications.AndroidImportance.HIGH,
-    });
-  }
-
-  await Notifications.getExpoPushTokenAsync();
-}
+/* ================= VERSION ================= */
 
 function isNewerVersion(remote: string, local: string) {
   const r = remote.split(".").map(Number);
@@ -80,15 +58,13 @@ function isNewerVersion(remote: string, local: string) {
   return false;
 }
 
+/* ================= APP ================= */
+
 export default function HomeScreen() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem("loggedIn").then((v) => {
-      setIsLoggedIn(v === "true");
-    });
-
-    registerForPushNotifications();
+    AsyncStorage.getItem("loggedIn").then((v) => setIsLoggedIn(v === "true"));
   }, []);
 
   return (
@@ -104,55 +80,78 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
 
   const [currentTab, setCurrentTab] = useState<TabType>("inicio");
   const [modalVisible, setModalVisible] = useState(false);
-  const [showNewFeatures, setShowNewFeatures] = useState(false);
+
+  const [forceUpdate, setForceUpdate] = useState(false);
   const [apkUrl, setApkUrl] = useState<string | null>(null);
+  const [latestVersion, setLatestVersion] = useState("");
 
   const { consumeClick, remainingClicks } = useClickLimit({
     maxClicks: 7,
     onLimitReached: () => setModalVisible(true),
   });
 
-  useEffect(() => {
-    async function checkUpdate() {
-      const { data } = await supabase
-        .from("app_versions")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+  /* ===== FUNÇÃO CENTRAL DE CHECK ===== */
 
-      if (!data) return;
+  const checkUpdate = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("app_versions")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-      const localVersion =
-        Constants.expoConfig?.version || Constants.manifest?.version || "0.0.0";
+    if (error || !data) return;
 
-      if (isNewerVersion(data.version, localVersion)) {
-        setApkUrl(data.apk_url);
-        setShowNewFeatures(true);
-      }
+    const localVersion =
+      Constants.expoConfig?.version || Constants.manifest?.version || "0.0.0";
+
+    if (isNewerVersion(data.version, localVersion)) {
+      setApkUrl(data.apk_url);
+      setLatestVersion(data.version);
+      setForceUpdate(true);
     }
-
-    checkUpdate();
   }, []);
 
+  /* ===== GET AO ABRIR ===== */
+
   useEffect(() => {
-    if (!CAN_USE_PUSH) return;
+    checkUpdate();
+  }, [checkUpdate]);
 
-    const received = Notifications.addNotificationReceivedListener(() => {
-      setShowNewFeatures(true);
-    });
+  /* ===== GET EM INTERVALO (POLLING) ===== */
 
-    const response = Notifications.addNotificationResponseReceivedListener(
-      () => {
-        setShowNewFeatures(true);
-      },
-    );
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!forceUpdate) checkUpdate();
+    }, 10000); // ⏱️ 10 segundos
+
+    return () => clearInterval(interval);
+  }, [checkUpdate, forceUpdate]);
+
+  /* ===== REALTIME (EXTRA SEGURANÇA) ===== */
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("force-update")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "app_versions",
+        },
+        () => {
+          checkUpdate();
+        },
+      )
+      .subscribe();
 
     return () => {
-      received.remove();
-      response.remove();
+      supabase.removeChannel(channel);
     };
-  }, []);
+  }, [checkUpdate]);
+
+  /* ===== UI ===== */
 
   const playClick = useCallback(async () => {
     try {
@@ -168,16 +167,14 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
   }, []);
 
   const handleTabPress = (tab: TabType) => {
+    if (forceUpdate) return;
     if (tab === currentTab) return;
-
     playClick();
-
     if (!isLoggedIn && !consumeClick()) return;
-
     setCurrentTab(tab);
   };
 
-  const handleUpdatePress = () => {
+  const handleForceUpdate = () => {
     if (apkUrl) Linking.openURL(apkUrl);
   };
 
@@ -207,12 +204,6 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
         <ProBadge />
       </View>
 
-      <NewFeaturesBanner
-        visible={showNewFeatures}
-        onClose={() => setShowNewFeatures(false)}
-        onPress={handleUpdatePress}
-      />
-
       <View style={[styles.content, { paddingBottom: 80 + insets.bottom }]}>
         {renderScreen()}
       </View>
@@ -226,6 +217,12 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
         remainingClicks={remainingClicks}
         onClose={() => setModalVisible(false)}
         onLogin={() => router.push("/login")}
+      />
+
+      <ForceUpdateModal
+        visible={forceUpdate}
+        version={latestVersion}
+        onUpdate={handleForceUpdate}
       />
     </View>
   );

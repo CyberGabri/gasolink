@@ -2,7 +2,7 @@
   "expo": {
     "name": "Gasolink",
     "slug": "gasolink",
-    "version": "11.0.0",
+    "version": "10.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "gasolink",
@@ -23,7 +23,12 @@
       },
       "permissions": [
         "NOTIFICATIONS",
-        "NOTIFICATIONS"
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "FOREGROUND_SERVICE",
+        "MODIFY_AUDIO_SETTINGS"
       ]
     },
     "ios": {
@@ -31,7 +36,11 @@
       "supportsTablet": true,
       "usesAppleSignIn": false,
       "infoPlist": {
-        "NSUserNotificationUsageDescription": "Este app utiliza notificações para avisar sobre atualizações e novos recursos."
+        "NSUserNotificationUsageDescription": "O Gasolink usa notificações para enviar alertas de preços baixos.",
+        "NSCameraUsageDescription": "O Gasolink precisa da câmera para escanear notas fiscais e gravar vídeos.",
+        "NSMicrophoneUsageDescription": "O Gasolink precisa do microfone para gravar áudio nos vídeos.",
+        "NSPhotoLibraryUsageDescription": "O Gasolink precisa acessar sua galeria para salvar downloads de vídeos e fotos.",
+        "NSPhotoLibraryAddUsageDescription": "Permite que o Gasolink salve mídias baixadas no seu rolo de câmera."
       }
     },
     "runtimeVersion": {
