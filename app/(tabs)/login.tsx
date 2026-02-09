@@ -12,6 +12,7 @@ import {
   Animated,
   ImageBackground,
   TouchableOpacity,
+  Easing,
 } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -29,11 +30,13 @@ export default function LoginScreen() {
   const [errors, setErrors] = useState(false);
   const [isVerifying, setIsVerifying] = useState(true);
   const [currentMessage, setCurrentMessage] = useState(0);
+  const [showOpening, setShowOpening] = useState(true);
 
   const openingTranslateY = useRef(new Animated.Value(0)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
-  const logoY = useRef(new Animated.Value(20)).current;
-  const contentFade = useRef(new Animated.Value(1)).current;
+  const logoScale = useRef(new Animated.Value(0.9)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const contentTranslateY = useRef(new Animated.Value(30)).current;
   const phraseFade = useRef(new Animated.Value(0)).current;
   const shakeAnimation = useRef(new Animated.Value(0)).current;
 
@@ -63,22 +66,39 @@ export default function LoginScreen() {
       Animated.parallel([
         Animated.timing(logoOpacity, {
           toValue: 1,
-          duration: 700,
+          duration: 900,
           useNativeDriver: true,
         }),
-        Animated.timing(logoY, {
-          toValue: 0,
-          duration: 700,
+        Animated.spring(logoScale, {
+          toValue: 1.1,
+          friction: 4,
           useNativeDriver: true,
         }),
       ]),
-      Animated.delay(500),
-      Animated.timing(openingTranslateY, {
-        toValue: -height,
-        duration: 900,
-        useNativeDriver: true,
-      }),
-    ]).start();
+      Animated.delay(700),
+      Animated.parallel([
+        Animated.timing(openingTranslateY, {
+          toValue: -height,
+          duration: 1100,
+          easing: Easing.bezier(0.77, 0, 0.175, 1),
+          useNativeDriver: true,
+        }),
+        Animated.timing(contentOpacity, {
+          toValue: 1,
+          duration: 700,
+          delay: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(contentTranslateY, {
+          toValue: 0,
+          duration: 700,
+          delay: 300,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start(() => {
+      setShowOpening(false);
+    });
   };
 
   const startPhraseLoop = () => {
@@ -120,9 +140,26 @@ export default function LoginScreen() {
   const triggerErrorAnimation = () => {
     setErrors(true);
     Animated.sequence([
-      Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: 0, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, {
+        toValue: 10,
+        duration: 40,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: -10,
+        duration: 40,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 10,
+        duration: 40,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 0,
+        duration: 40,
+        useNativeDriver: true,
+      }),
     ]).start();
   };
 
@@ -132,28 +169,52 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.main}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#000"
+        translucent={false}
+      />
 
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false} keyboardShouldPersistTaps="handled">
-          <Animated.View style={{ flex: 1, opacity: contentFade }}>
+      <Animated.View
+        style={{
+          flex: 1,
+          opacity: contentOpacity,
+          transform: [{ translateY: contentTranslateY }],
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+          >
             <ImageBackground
-              source={{ uri: "https://images.unsplash.com/photo-1545147458-7182281a942a?q=80&w=1200" }}
+              source={{
+                uri: "https://images.unsplash.com/photo-1545147458-7182281a942a?q=80&w=1200",
+              }}
               style={styles.header}
             >
               <View style={styles.overlay}>
                 <Text style={styles.logoText}>GasoLink</Text>
                 <Animated.View style={{ opacity: phraseFade, marginTop: 10 }}>
-                  <Text style={styles.animatedText}>{messages[currentMessage]}</Text>
+                  <Text style={styles.animatedText}>
+                    {messages[currentMessage]}
+                  </Text>
                 </Animated.View>
               </View>
             </ImageBackground>
 
             <View style={styles.formCard}>
               <Text style={styles.title}>Olá novamente!</Text>
-              <Text style={styles.subtitle}>Acesse sua conta para continuar.</Text>
+              <Text style={styles.subtitle}>
+                Acesse sua conta para continuar.
+              </Text>
 
-              <Animated.View style={{ transform: [{ translateX: shakeAnimation }] }}>
+              <Animated.View
+                style={{ transform: [{ translateX: shakeAnimation }] }}
+              >
                 <GasoInput
                   label="E-mail"
                   placeholder="seu@email.com"
@@ -175,49 +236,62 @@ export default function LoginScreen() {
                   }}
                   editable={!isLoading}
                 />
-                {errors && <Text style={styles.errorText}>Preencha todos os campos</Text>}
+                {errors && (
+                  <Text style={styles.errorText}>Preencha todos os campos</Text>
+                )}
               </Animated.View>
 
-              <Pressable style={styles.forgot} onPress={() => router.push("/recuperar-senha")}>
+              <Pressable
+                style={styles.forgot}
+                onPress={() => router.push("/recuperar-senha")}
+              >
                 <Text style={styles.forgotText}>Esqueceu a senha?</Text>
               </Pressable>
 
-              <GasoButton title={isLoading ? "Carregando..." : "Entrar na Conta"} onPress={handleLogin} />
+              <GasoButton
+                title={isLoading ? "Carregando..." : "Entrar na Conta"}
+                onPress={handleLogin}
+              />
 
-              <TouchableOpacity style={styles.skipBtn} onPress={() => router.replace("/(tabs)/")}>
+              <TouchableOpacity
+                style={styles.skipBtn}
+                onPress={() => router.replace("/(tabs)/")}
+              >
                 <Text style={styles.skipText}>Continuar sem login</Text>
               </TouchableOpacity>
 
-              <Pressable style={styles.footerBtn} onPress={() => router.push("/registro")}>
+              <Pressable
+                style={styles.footerBtn}
+                onPress={() => router.push("/registro")}
+              >
                 <Text style={styles.footerText}>
-                  Não tem conta? <Text style={styles.footerHighlight}>Cadastre-se</Text>
+                  Não tem conta?{" "}
+                  <Text style={styles.footerHighlight}>Cadastre-se</Text>
                 </Text>
               </Pressable>
             </View>
-          </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Animated.View>
 
-      <Animated.View
-        style={[
-          styles.openingOverlay,
-          {
-            transform: [{ translateY: openingTranslateY }],
-          },
-        ]}
-      >
-        <Animated.Text
+      {showOpening && (
+        <Animated.View
+          pointerEvents="none"
           style={[
-            styles.logoOpening,
-            {
-              opacity: logoOpacity,
-              transform: [{ translateY: logoY }],
-            },
+            styles.openingOverlay,
+            { transform: [{ translateY: openingTranslateY }] },
           ]}
         >
-          GasoLink
-        </Animated.Text>
-      </Animated.View>
+          <Animated.Text
+            style={[
+              styles.logoOpening,
+              { opacity: logoOpacity, transform: [{ scale: logoScale }] },
+            ]}
+          >
+            GasoLink
+          </Animated.Text>
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -225,24 +299,40 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   main: { flex: 1, backgroundColor: "#000" },
   openingOverlay: {
-    position: "absolute",
-    height,
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#000",
+    zIndex: 9999,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  logoOpening: {
+    color: "#FFF",
+    fontSize: 64,
+    fontWeight: "900",
+    letterSpacing: -3,
+  },
+  header: {
+    height: height * 0.48,
     width,
     backgroundColor: "#000",
-    zIndex: 999,
-    justifyContent: "center",
-    alignItems: "center",
   },
-  logoOpening: { color: "#FFF", fontSize: 56, fontWeight: "900", letterSpacing: -2 },
-  header: { height: height * 0.45, width, backgroundColor: "#000" },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.7)",
+    backgroundColor: "rgba(0,0,0,0.65)",
     justifyContent: "center",
     alignItems: "center",
   },
-  logoText: { color: "#FFF", fontSize: 52, fontWeight: "900", letterSpacing: -2 },
-  animatedText: { color: "#E2E8F0", fontSize: 16, fontWeight: "600" },
+  logoText: {
+    color: "#FFF",
+    fontSize: 52,
+    fontWeight: "900",
+    letterSpacing: -2,
+  },
+  animatedText: {
+    color: "#E2E8F0",
+    fontSize: 16,
+    fontWeight: "600",
+  },
   formCard: {
     flex: 1,
     paddingHorizontal: 30,
@@ -251,7 +341,8 @@ const styles = StyleSheet.create({
     marginTop: -60,
     borderTopLeftRadius: 50,
     borderTopRightRadius: 50,
-    minHeight: height * 0.6,
+    minHeight: height * 0.65,
+    elevation: 5,
   },
   title: { fontSize: 28, fontWeight: "900", color: "#0F172A" },
   subtitle: { fontSize: 15, color: "#64748B", marginBottom: 25 },
@@ -266,7 +357,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
     marginBottom: 10,
+    marginTop: 5,
   },
   skipBtn: { marginTop: 20, alignSelf: "center", padding: 10 },
-  skipText: { color: "#94A3B8", fontWeight: "700", textDecorationLine: "underline" },
+  skipText: {
+    color: "#94A3B8",
+    fontWeight: "700",
+    textDecorationLine: "underline",
+  },
 });

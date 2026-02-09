@@ -14,6 +14,7 @@ interface Props {
   visible: boolean;
   update?: boolean;
   loading?: boolean;
+  onPress?: () => void;
   onUpdate?: () => void;
   onClose?: () => void;
 }
@@ -22,10 +23,13 @@ export default function NewFeaturesBanner({
   visible,
   update = false,
   loading = false,
+  onPress,
   onUpdate,
   onClose,
 }: Props) {
   if (!visible) return null;
+
+  const handleAction = onPress ?? onUpdate;
 
   return (
     <MotiView
@@ -52,7 +56,7 @@ export default function NewFeaturesBanner({
 
       {update ? (
         <TouchableOpacity
-          onPress={onUpdate}
+          onPress={handleAction}
           disabled={loading}
           style={styles.actionContainer}
         >
@@ -80,14 +84,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 10,
     borderRadius: 14,
-
     ...(Platform.OS === "web"
-      ? {
-          boxShadow: "0px 8px 20px rgba(0,0,0,0.15)",
-        }
-      : {
-          elevation: 6,
-        }),
+      ? { boxShadow: "0px 8px 20px rgba(0,0,0,0.15)" }
+      : { elevation: 6 }),
   },
   icon: {
     marginRight: 10,

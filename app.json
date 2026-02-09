@@ -22,6 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
+        "NOTIFICATIONS",
         "NOTIFICATIONS"
       ]
     },
@@ -37,7 +38,8 @@
       "policy": "appVersion"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/5c8dfda1-4a69-4d8b-8778-33913e27792c"
     },
     "plugins": [
       "expo-router"
