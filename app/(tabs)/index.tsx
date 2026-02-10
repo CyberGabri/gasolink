@@ -10,7 +10,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import * as Linking from "expo-linking";
-import { createClient } from "@supabase/supabase-js";
 
 import Inicio from "./inicio";
 import VeiculoConfig from "./veiculo-config";
@@ -25,20 +24,22 @@ import ProBadge from "@/components/ProBadge";
 import ForceUpdateModal from "@/components/ForceUpdateModal";
 
 import useClickLimit from "@/hooks/useClickLimit";
+import { supabase } from "@/lib/supabase";
+import { registerForPush } from "@/lib/push";
 
-LogBox.ignoreLogs(["expo-notifications: Android Push notifications"]);
+LogBox.ignoreLogs(["expo-notifications"]);
 
 type TabType = "inicio" | "veiculo-config" | "financeiro" | "perfil-user";
 
-const supabase = createClient(
-  "https://llwoggphcjolztgobach.supabase.co",
-  "sb_publishable_6KK9oSOhlIFBvdRdMGzTlQ_B_GkoxlI",
-  {
-    realtime: { params: { eventsPerSecond: 10 } },
-  },
-);
-
-const CAN_USE_PUSH = Platform.OS !== "web" && Constants.appOwnership !== "expo";
+/* 🔔 HANDLER GLOBAL (API NOVA) */
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 function isNewerVersion(remote: string, local: string) {
   const r = remote.split(".").map(Number);
@@ -58,14 +59,14 @@ export default function HomeScreen() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    AsyncStorage.getItem("loggedIn").then((v) => setIsLoggedIn(v === "true"));
+    AsyncStorage.getItem("loggedIn").then(v =>
+      setIsLoggedIn(v === "true"),
+    );
     const timer = setTimeout(() => setShowSplash(false), 2000);
     return () => clearTimeout(timer);
   }, []);
 
-  if (showSplash) {
-    return <Splash />;
-  }
+  if (showSplash) return <Splash />;
 
   return (
     <SafeAreaProvider>
@@ -90,6 +91,24 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
     onLimitReached: () => setModalVisible(true),
   });
 
+  /* 🔔 REGISTRA PUSH QUANDO USUÁRIO ESTIVER LOGADO */
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const register = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      await registerForPush(user.id);
+    };
+
+    register();
+  }, [isLoggedIn]);
+
+  /* 🔄 CHECK UPDATE */
   const checkUpdate = useCallback(async () => {
     const { data } = await supabase
       .from("app_versions")
@@ -101,7 +120,9 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
     if (!data) return;
 
     const localVersion =
-      Constants.expoConfig?.version || Constants.manifest?.version || "0.0.0";
+      Constants.expoConfig?.version ||
+      Constants.manifest?.version ||
+      "0.0.0";
 
     if (isNewerVersion(data.version, localVersion)) {
       setApkUrl(data.apk_url);
@@ -121,6 +142,7 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
     return () => clearInterval(interval);
   }, [checkUpdate, forceUpdate]);
 
+  /* 🔄 REALTIME FORCE UPDATE */
   useEffect(() => {
     const channel = supabase
       .channel("force-update")
@@ -140,6 +162,28 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
     };
   }, [checkUpdate]);
 
+  /* 🔔 REALTIME IN-APP */
+  useEffect(() => {
+    const channel = supabase
+      .channel("notifications-channel")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+        },
+        payload => {
+          console.log("🔔 IN-APP:", payload.new);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const playClick = useCallback(async () => {
     try {
       const { sound } = await Audio.Sound.createAsync(
@@ -154,8 +198,7 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
   }, []);
 
   const handleTabPress = (tab: TabType) => {
-    if (forceUpdate) return;
-    if (tab === currentTab) return;
+    if (forceUpdate || tab === currentTab) return;
     playClick();
     if (!isLoggedIn && !consumeClick()) return;
     setCurrentTab(tab);
@@ -185,7 +228,9 @@ function HomeContent({ isLoggedIn }: { isLoggedIn: boolean }) {
       <View
         style={{
           marginTop:
-            Platform.OS === "android" ? StatusBar.currentHeight : insets.top,
+            Platform.OS === "android"
+              ? StatusBar.currentHeight
+              : insets.top,
         }}
       >
         <ProBadge />

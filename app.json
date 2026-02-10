@@ -2,19 +2,26 @@
   "expo": {
     "name": "Gasolink",
     "slug": "gasolink",
-    "version": "10.0.0",
+    "version": "10.3.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "gasolink",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+
     "icon": "./assets/logo.png",
+
     "splash": {
       "image": "./assets/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+
+    "assetBundlePatterns": ["**/*"],
+
+    "notification": {
+      "icon": "./assets/logo.png",
+      "color": "#ffffff"
+    },
+
     "android": {
       "package": "com.dalva.gasolink",
       "adaptiveIcon": {
@@ -22,38 +29,41 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
-        "NOTIFICATIONS",
+        "POST_NOTIFICATIONS",
         "CAMERA",
-        "RECORD_AUDIO",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "FOREGROUND_SERVICE",
-        "MODIFY_AUDIO_SETTINGS"
+        "RECORD_AUDIO"
       ]
     },
+
     "ios": {
       "bundleIdentifier": "com.dalva.gasolink",
       "supportsTablet": true,
-      "usesAppleSignIn": false,
       "infoPlist": {
-        "NSUserNotificationUsageDescription": "O Gasolink usa notificações para enviar alertas de preços baixos.",
-        "NSCameraUsageDescription": "O Gasolink precisa da câmera para escanear notas fiscais e gravar vídeos.",
-        "NSMicrophoneUsageDescription": "O Gasolink precisa do microfone para gravar áudio nos vídeos.",
-        "NSPhotoLibraryUsageDescription": "O Gasolink precisa acessar sua galeria para salvar downloads de vídeos e fotos.",
-        "NSPhotoLibraryAddUsageDescription": "Permite que o Gasolink salve mídias baixadas no seu rolo de câmera."
+        "NSUserNotificationUsageDescription": "O Gasolink usa notificações para avisar sobre preços baixos e novidades.",
+        "NSPushNotificationsUsageDescription": "O Gasolink usa notificações para avisar sobre preços baixos e novidades.",
+        "NSCameraUsageDescription": "O Gasolink precisa da câmera para escanear notas fiscais.",
+        "NSMicrophoneUsageDescription": "O Gasolink precisa do microfone para gravar áudio em vídeos.",
+        "NSPhotoLibraryUsageDescription": "O Gasolink precisa acessar sua galeria para salvar imagens.",
+        "NSPhotoLibraryAddUsageDescription": "Permite que o Gasolink salve mídias no rolo da câmera."
       }
     },
+
+    "plugins": [
+      "expo-router",
+      "expo-notifications"
+    ],
+
     "runtimeVersion": {
       "policy": "appVersion"
     },
+
     "updates": {
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/5c8dfda1-4a69-4d8b-8778-33913e27792c"
     },
-    "plugins": [
-      "expo-router"
-    ],
+
     "owner": "luanzimbr",
+
     "extra": {
       "router": {},
       "eas": {
